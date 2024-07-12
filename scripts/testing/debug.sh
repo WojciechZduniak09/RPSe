@@ -1,3 +1,5 @@
+#! /bin/bash
+#
 # RPSe, a rock paper scissors game for Linux systems.
 #
 # Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak
@@ -13,20 +15,20 @@
 # You should have received a copy of the GNU General Public License along with RPSe.
 # If not, see <https://www.gnu.org/licenses/>.
 
-#! /bin/bash
-
 # Variable definitions.
 GREEN_FG=`tput setaf 2`
 RED_FG=`tput setaf 1`
 RESET=`tput sgr0`
 
 # Setting up RPSe executable.
-cd ../
+echo "${RED_FG}This debug menu is obsolete, a new one may be developed in the future${RESET}"
+sleep 3.5
+cd ../../
 make clean
 make all
 if [ $? -ne 0  ]; then
 	echo "${RED_FG}Compilation proccess has failed!${RESET}"
-	echo "${RED_FG}Exit code 1 for test_RPSe.sh${RESET}"
+	echo "${RED_FG}Exit code 1 for debug.sh${RESET}"
 	exit 1 
 fi
 cd bin/
@@ -66,4 +68,4 @@ fi
 # Cleanup.
 cd ..
 make clean
-cd scripts/
+cd scripts/testing/

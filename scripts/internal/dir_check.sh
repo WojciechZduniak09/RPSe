@@ -1,3 +1,5 @@
+#! /bin/bash
+#
 # RPSe, a rock paper scissors game for Linux systems.
 #
 # Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak
@@ -13,15 +15,13 @@
 # You should have received a copy of the GNU General Public License along with RPSe.
 # If not, see <https://www.gnu.org/licenses/>.
 
-#! /bin/bash
-GREEN_FG=`tput setaf 2`
-RESET=`tput sgr0`
-CHECK_DIR() {
+check_directory() {
 	if [ ! -d $1 ]; then
 		echo "Directory $1/ not found!"
 		mkdir $1
-		echo "${GREEN_FG}Directory $1/ has been created!${RESET}"
+		echo "Directory $1/ has been created!"
 	fi
 }
-CHECK_DIR "bin"
-CHECK_DIR "bin/objects"
+
+check_directory "bin"
+check_directory "bin/objects"

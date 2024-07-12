@@ -15,13 +15,14 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
 #include "../include/rpsecore-io.h"
-#include "../include/rpsecore-setup.h"
-#include "../include/rpsecore-g1.h"
-#include "../include/rpsecore-g2.h"
+#include "../include/rpsecore-logic.h"
+#include "../include/rpsecore-gamemode.h"
+#include "../include/rpsecore-error.h"
+#include <stdio.h>
+#include <time.h>
 
-#define license_statement() { \
+static void rpse_main_licenseStatement(void) { \
 	printf("RPSe is released under license GNU General Public License v3.0.\n" \
 			"RPSe (Rock Paper Scissors expanded), a rock paper scissors game for Linux systems.\n\n" \
 			"Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak\n\n" \
@@ -37,21 +38,20 @@
 			"If not, see <https://www.gnu.org/licenses/>.\n\n"); \
 }
 
-static int gamemode_selection(union user_input *p_usr_in) {
-    printf("Please select a gamemode by its number:\n"
-		"1. Player vs Player.\n"
-    	"2. Player vs Bot.\n");
-	int_input_prompt(p_usr_in, 1, 2);
-	return p_usr_in->int_in;
-}
-
 int main(void) {
-	union user_input usr_in;
-	usr_in.int_in=0;
-	union user_input *p_usr_in=&usr_in;
-	printf("RPSe Open Beta 1.\n\n");
-	license_statement();
-	enter_to_continue_prompt();
-	while (((gamemode_selection(p_usr_in)==1) ? gamemode_1(p_usr_in) : gamemode_2(p_usr_in)!=1));
+	printf("RPSe Open Beta 1.\n");
+	rpse_main_licenseStatement();
+	rpse_io_enterToContinue();
+
+	user_input_data_t *input_data = &(user_input_data_t) {
+		.buffer_size = 0,
+		.interval = {0, 0},
+		.input.int_input = 0
+	};
+
+	struct timespec ts = {0, 0};
+
+	while ((rpse_gamemode_menu(input_data) == 1) ? rpse_gamemode_pvp(&ts) : rpse_gamemode_pve(input_data, &ts) != 2);
+
 	return 0;
 }

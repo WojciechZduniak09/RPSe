@@ -1,3 +1,6 @@
+#! /bin/bash
+#
+#
 # RPSe, a rock paper scissors game for Linux systems.
 #
 # Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak
@@ -13,34 +16,25 @@
 # You should have received a copy of the GNU General Public License along with RPSe.
 # If not, see <https://www.gnu.org/licenses/>.
 
-#! /bin/bash
-
-# Variable & array definitions.
 COMPRESSION_MODE=0
-RED_FG=`tput setaf 1`
-GREEN_FG=`tput setaf 2`
-RESET=`tput sgr0`
-MENU=("Select target tarball:" "\t1. tar.gz" "\t\t- Moderate compression." \
-	"\t\t- Fast speed." "\t2. tar.bz2" "\t\t- OK compression." "\t\t- Moderate speed." \
-	"\t3. tar.xz" "\t\t- Excellent compression." "\t\t- Slow speed.")
 
-# Requesting input.
+# Requesting compression format.
 while ! [[ $COMPRESSION_MODE =~ ^[1-3]$ ]]; do
-	for element in "${MENU[@]}"; do
-		echo -e $element
-	done
-	read -p "Your choice is: " COMPRESSION_MODE
-	if ! [[ $COMPRESSION_MODE =~ ^[1-3]$ ]]; then
-		echo -e "Invalid input, please try again!\n"
-		sleep .5
-	fi
+	echo "<--- Compression options --->"
+	echo "1. tar.gz."
+	echo "2. tar.bz2."
+	echo "3. tar.xz (recommended)."
+
+	read -p "Choose an option by number: " COMPRESSION_MODE
 done
 
-# Compression.
+# Setting up RPSe for compression.
 cd ../../
 TARGET_DIR=$PWD
 cp -rf RPSe/ tmp/
 rm -rf tmp/.git
+
+# Compression.
 case $COMPRESSION_MODE in
 	1)
 		tar -czf RPSe.tar.gz tmp/
@@ -52,15 +46,17 @@ case $COMPRESSION_MODE in
 		tar -cJf RPSe.tar.xz tmp/
 		;;
 esac
+
+# Handling a compression failure
 if [ $? -ne 0 ]; then
-	echo "${RED_FG}Compression failed!${RESET}"
 	rm -rf tmp/
 	cd RPSe/scripts/
+	echo -e "\nCompression failed!"
 	exit 1
 fi
 
 # Cleanup.
 rm -rf tmp/
 cd RPSe/scripts
-echo "${GREEN_FG}Compression finished!${RESET}"
-echo "The compressed file can be found in the ${GREEN_FG}$TARGET_DIR/${RESET} directory."
+echo -e "\nCompression finished!"
+echo -e "\nCompressed file directory: $TARGET_DIR"

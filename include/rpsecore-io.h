@@ -18,15 +18,21 @@
 #ifndef RPSECORE_IO_H
 #define RPSECORE_IO_H
 
-union user_input {
-    int int_in;
-    char* str_in;
-    char char_in;
-};
+#include <stdbool.h>
 
-void enter_to_continue_prompt(void);
-void str_input_prompt(union user_input *p_usr_in, int str_size);
-void int_input_prompt(union user_input *p_usr_in, int min, int max);
-void yes_no_prompt(union user_input *p_usr_in);
+typedef struct {
+    union input {
+        int int_input;
+        char char_input;
+        char *str_input;
+    } input;
+    int interval[2];
+    unsigned short int buffer_size;
+} user_input_data_t;
+
+void rpse_io_enterToContinue(void);
+void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
+void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char* prompt);
+void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
 
 #endif

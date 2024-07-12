@@ -15,6 +15,7 @@
 
 bin/
 services/
+obsolete/
 .TODO.md
 .RELEASE.md
 .vscode/

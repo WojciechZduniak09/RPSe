@@ -15,11 +15,15 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_G1_H
-#define RPSECORE_G1_H
+#ifndef RPSECORE_ERROR_H
+#define RPSECORE_ERROR_H
 
-#include "rpsecore-io.h"
+#include <stdbool.h>
+#include "rpsecore-logic.h"
 
-int gamemode_1(void);
+void rpse_error_blameDev(void);
+void rpse_error_checkStringMalloc(char* target_string);
+void rpse_error_checkMoveDataMalloc(move_data_t *target_data);
+void rpse_error_checkStringArrayMalloc(char **target_str_arr);
 
 #endif

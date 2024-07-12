@@ -13,8 +13,9 @@
 # You should have received a copy of the GNU General Public License along with RPSe.
 # If not, see <https://www.gnu.org/licenses/>.
 
-CC = gcc
+COMPILER = gcc
 CFLAGS = -Wall -g -Wextra -Werror
+
 RED_FG=`tput setaf 1`
 GREEN_FG=`tput setaf 2`
 RESET=`tput sgr0`
@@ -27,33 +28,29 @@ dir_check:
 
 bin/objects/rpsecore-io.o: src/rpsecore-io.c include/rpsecore-io.h
 	@echo "${GREEN_FG}Compiling rpsecore-io...${RESET}"
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/rpsecore-setup.o: src/rpsecore-setup.c include/rpsecore-setup.h
-	@echo "${GREEN_FG}Compiling rpsecore-setup...${RESET}"	
-	@$(CC) $(CFLAGS) -c $< -o $@
+bin/objects/rpsecore-error.o: src/rpsecore-error.c include/rpsecore-error.h
+	@echo "${GREEN_FG}Compiling rpsecore-error...${RESET}"	
+	@$(COMPILER) $(CFLAGS) -c $< -o $@
 
 bin/objects/rpsecore-logic.o: src/rpsecore-logic.c include/rpsecore-logic.h
 	@echo "${GREEN_FG}Compiling rpsecore-logic...${RESET}"	
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/rpsecore-g1.o: src/rpsecore-g1.c include/rpsecore-g1.h
-	@echo "${GREEN_FG}Compiling rpsecore-g1...${RESET}"	
-	@$(CC) $(CFLAGS) -c $< -o $@
+bin/objects/rpsecore-gamemode.o: src/rpsecore-gamemode.c include/rpsecore-gamemode.h
+	@echo "${GREEN_FG}Compiling rpsecore-gamemode...${RESET}"	
+	@$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/rpsecore-g2.o: src/rpsecore-g2.c include/rpsecore-g2.h
-	@echo "${GREEN_FG}Compiling rpsecore-g2...${RESET}"	
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-bin/objects/main.o: src/main.c include/rpsecore-io.h include/rpsecore-setup.h include/rpsecore-logic.h \
-include/rpsecore-g1.h include/rpsecore-g2.h
+bin/objects/main.o: src/main.c include/rpsecore-io.h include/rpsecore-error.h include/rpsecore-logic.h \
+include/rpsecore-gamemode.h
 	@echo "${GREEN_FG}Compiling main...${RESET}"
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(COMPILER) $(CFLAGS) -c $< -o $@
 	
-bin/RPSe: bin/objects/main.o bin/objects/rpsecore-io.o bin/objects/rpsecore-setup.o bin/objects/rpsecore-logic.o \
-bin/objects/rpsecore-g1.o bin/objects/rpsecore-g2.o
+bin/RPSe: bin/objects/main.o bin/objects/rpsecore-io.o bin/objects/rpsecore-error.o bin/objects/rpsecore-logic.o \
+bin/objects/rpsecore-gamemode.o
 	@echo "${GREEN_FG}Compiling RPSe...${RESET}"	
-	@$(CC) $(CFLAGS) $^ -o $@
+	@$(COMPILER) $(CFLAGS) $^ -o $@
 	@echo "${GREEN_FG}Compilation finished!${RESET}"
 		
 clean:

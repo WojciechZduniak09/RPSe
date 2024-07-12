@@ -15,19 +15,14 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_SETUP_H
-#define RPSECORE_SETUP_H
+#ifndef RPSECORE_GAMEMODE_H
+#define RPSECORE_GAMEMODE_H
 
 #include "rpsecore-io.h"
+#include <time.h>
 
-struct move_4_combinations {
-    int beats_rock;
-    int beats_paper;
-    int beats_scissors;
-};
-
-char** move_name_creation(union user_input *p_union);
-void move_name_realloc(char **p_move_arr, union user_input *p_usr_in);
-void move_4_combination_creation(struct move_4_combinations *p_m4_com, union user_input *p_usr_in);
+unsigned short int rpse_gamemode_menu(user_input_data_t *input_data);
+unsigned short int rpse_gamemode_pve(user_input_data_t *input_data, struct timespec *ts);
+unsigned short int rpse_gamemode_pvp(struct timespec *ts);
 
 #endif

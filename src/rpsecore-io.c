@@ -17,53 +17,95 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 
-void enter_to_continue_prompt(void) {
+void rpse_io_static_tabBeforeInput(bool insertTabBeforeInput) {
+	if (insertTabBeforeInput == true) {
+		printf("\t");
+	}
+}
+
+void rpse_io_static_clearStdin(void) {
+	int c;
+	while ((c = getchar()) != '\n' && c != EOF) {};
+}
+
+void rpse_io_static_confirmFirstCall(unsigned short int target) {
+	if (target == 0) {
+		rpse_io_static_clearStdin();
+	}
+	else {
+		target--;
+	}
+
+}
+
+void rpse_io_enterToContinue(void) {
+	/* FIRST_CALL is used as a boolean value (0 == false, anything but 0 == true) */
+	static unsigned short int FIRST_CALL = 1;
+	rpse_io_static_confirmFirstCall(FIRST_CALL);
+
 	printf("Press enter to continue . . . ");
-	getchar();
+	getchar();	
 	printf("\n");
 }
 
-void str_input_prompt(union user_input *p_usr_in, int str_size) {
-	if (str_size<0) {
-		fprintf(stderr, "Code error detected. Variable \"str_size\" of type \"int\" is less than 0.\n");
-		exit(1);
-	}
-	p_usr_in->str_in=malloc(str_size+1);
-	if (p_usr_in->str_in==NULL) {
-		fprintf(stderr, "Malloc() fail for member \"str_in\" of \"usr_in\" of type \"union\".\n");
-		exit(1);
-	}
+void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input) {
+	rpse_io_static_tabBeforeInput(insert_tab_before_input);
+
+	input_data->input.str_input = malloc(input_data->buffer_size);
+	rpse_error_checkStringMalloc(input_data->input.str_input);
+
 	getchar();
-	fgets(p_usr_in->str_in, str_size+1, stdin);
-	p_usr_in->str_in[strcspn(p_usr_in->str_in, "\n")]=0;
-	p_usr_in->str_in = realloc(p_usr_in->str_in, str_size+1);
+
+	fgets(input_data->input.str_input, input_data->buffer_size, stdin);
+
+	input_data->input.str_input[strcspn(input_data->input.str_input, "\n")] = 0;
+
+	input_data->input.str_input = realloc(input_data->input.str_input, strlen(input_data->input.str_input) + 1);
+	rpse_error_checkStringMalloc(input_data->input.str_input);
 }
 
-void int_input_prompt(union user_input *p_usr_in, int min, int max) {
-	if (max<min) {
-	       fprintf(stderr, "Code error detected. Variable \"max\" of type \"int\" is less than\n" \
-			       "variable \"min\" of type \"int\".\n");
-	       exit(1);
+void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char* prompt) {
+	if (input_data->interval[0] > input_data->interval[1]) {
+		rpse_error_blameDev();
 	}
-	scanf(" %d", &p_usr_in->int_in);
-	while (p_usr_in->int_in>max || p_usr_in->int_in<min) {
-		getchar();
-		fprintf(stderr, "Invalid input! Your input must be in a range from %d to %d.\n", min, max);
-		scanf(" %d", &p_usr_in->int_in);
+
+	rpse_io_static_tabBeforeInput(insert_tab_before_input);
+
+	printf("%s", prompt);
+	scanf(" %d", &input_data->input.int_input);
+
+	while (input_data->input.int_input < input_data->interval[0] || \
+			input_data->input.int_input > input_data->interval[1]) {
+				getchar();
+				
+				fprintf(stderr, "Invalid input! Input must be a whole number in range of %d-%d.\n", \
+						input_data->interval[0], input_data->interval[1]);
+
+				rpse_io_static_tabBeforeInput(insert_tab_before_input);
+
+				printf("%s", prompt);
+				scanf(" %d", &input_data->input.int_input);
 	}
 }
 
-void yes_no_prompt(union user_input *p_usr_in) {
-	scanf(" %c", &p_usr_in->char_in);
-	p_usr_in->char_in=tolower(p_usr_in->char_in);
-	while (p_usr_in->char_in!='y' && p_usr_in->char_in!='n') {
-		fprintf(stderr, "Invalid input! Insert \"y\" for yes or \"n\" for no.\n");
-		scanf(" %c", &p_usr_in->char_in);
+void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input) {
+	/* ffs fix this bloody shitshow of a function */
+	rpse_io_static_tabBeforeInput(insert_tab_before_input);
+	
+	input_data->input.char_input = tolower(getchar());
+
+	while (input_data->input.char_input != 'y' && input_data->input.char_input != 'n') {
+		fprintf(stderr, "Invalid input! Insert 'y' for yes or 'n' for no.\n");
+
+		rpse_io_static_tabBeforeInput(insert_tab_before_input);
+		input_data->input.char_input = tolower(getchar());
+
+		rpse_io_static_clearStdin();
 	}
-	int c;
-	while ((c=getchar())!='\n' && c!=EOF) {};
 }
