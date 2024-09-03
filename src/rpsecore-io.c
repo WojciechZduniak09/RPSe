@@ -34,20 +34,9 @@ void rpse_io_static_clearStdin(void) {
 	while ((c = getchar()) != '\n' && c != EOF) {};
 }
 
-void rpse_io_static_confirmFirstCall(unsigned short int target) {
-	if (target == 0) {
-		rpse_io_static_clearStdin();
-	}
-	else {
-		target--;
-	}
-
-}
-
 void rpse_io_enterToContinue(void) {
-	/* FIRST_CALL is used as a boolean value (0 == false, anything but 0 == true) */
-	static unsigned short int FIRST_CALL = 1;
-	rpse_io_static_confirmFirstCall(FIRST_CALL);
+	static bool FIRST_CALL = true;
+	(FIRST_CALL == true) ? FIRST_CALL = false : getchar();
 
 	printf("Press enter to continue . . . ");
 	getchar();	
@@ -70,14 +59,14 @@ void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input) {
 	rpse_error_checkStringMalloc(input_data->input.str_input);
 }
 
+// Function to be deprecated in a future version.
 void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char* prompt) {
 	if (input_data->interval[0] > input_data->interval[1]) {
 		rpse_error_blameDev();
 	}
-
-	rpse_io_static_tabBeforeInput(insert_tab_before_input);
-
+	
 	printf("%s", prompt);
+	rpse_io_static_tabBeforeInput(insert_tab_before_input);
 	scanf(" %d", &input_data->input.int_input);
 
 	while (input_data->input.int_input < input_data->interval[0] || \
@@ -91,21 +80,51 @@ void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, ch
 
 				printf("%s", prompt);
 				scanf(" %d", &input_data->input.int_input);
+		
 	}
 }
 
+
+// experimental function (does not even work yet!!)
+/*
+void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char* prompt) {
+	//use strtol eventually?
+	bool input_is_valid = false;
+
+	while (!input_is_valid) {
+		printf("%s", prompt);
+		rpse_io_str(input_data, insert_tab_before_input);
+		unsigned short int inputted_str_len = strlen(input_data->input.str_input);
+
+		for (unsigned short int index = 0; index < inputted_str_len; index++) {
+			if (!isdigit(input_data->input.str_input[index])) {
+				fprintf(stderr, "Invalid input! Input must be a whole number in range of %d-%d.\n", \
+					input_data->interval[0], input_data->interval[1]);
+				free(input_data->input.str_input);
+				input_data->input.str_input = NULL;
+			}
+			else if (index == inputted_str_len - 1) {
+				input_data->input.int_input = atoi(input_data->input.str_input);
+				input_is_valid = (input_data->input.int_input > input_data->interval[0] && \
+					input_data->input.int_input < input_data->interval[1]) ? true : false;
+			}
+		}
+	}
+}
+*/
+
+
 void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input) {
-	/* ffs fix this bloody shitshow of a function */
 	rpse_io_static_tabBeforeInput(insert_tab_before_input);
 	
 	input_data->input.char_input = tolower(getchar());
 
 	while (input_data->input.char_input != 'y' && input_data->input.char_input != 'n') {
+		getchar();
 		fprintf(stderr, "Invalid input! Insert 'y' for yes or 'n' for no.\n");
 
 		rpse_io_static_tabBeforeInput(insert_tab_before_input);
 		input_data->input.char_input = tolower(getchar());
-
-		rpse_io_static_clearStdin();
 	}
+	getchar();
 }

@@ -24,6 +24,19 @@
 #include <time.h>
 #include <string.h>
 
+static void rpse_gamemode_static_roundStartCountdown(struct  timespec *ts) {
+    printf("Great! The game will start in 3");
+    fflush(stdout);
+    rpse_logic_wait(1000, ts);
+    for (unsigned short int countdown_number = 2; countdown_number > 0; countdown_number--) {
+        printf(", %u", countdown_number);
+        fflush(stdout);
+        rpse_logic_wait(1000, ts);
+    }
+    printf(", 0.\n");
+    rpse_logic_wait(1000, ts);
+}
+
 unsigned short int rpse_gamemode_menu(user_input_data_t *input_data) {
     printf("<----- Gamemode menu ----->\n"
             "1. Player vs Player (PvP - WIP).\n"
@@ -31,6 +44,7 @@ unsigned short int rpse_gamemode_menu(user_input_data_t *input_data) {
 
     input_data->interval[0] = 1;
     input_data->interval [1] = 2;
+    input_data->buffer_size = 2;
     
     rpse_io_int(input_data, false, "Select a gamemode by it's number: ");
 
@@ -49,16 +63,7 @@ unsigned short int rpse_gamemode_pve(user_input_data_t *input_data, struct times
 
     move_data_t *move_data = rpse_logic_setUpMoves(input_data, ts);
 
-    printf("Great! The game will start in 3");
-    fflush(stdout);
-    rpse_logic_wait(1000, ts);
-    for (unsigned short int countdown_number = 2; countdown_number > 0; countdown_number--) {
-        printf(", %u", countdown_number);
-        fflush(stdout);
-        rpse_logic_wait(1000, ts);
-    }
-    printf(", 0.\n");
-    rpse_logic_wait(1000, ts);
+    rpse_gamemode_static_roundStartCountdown(ts);
 
     round_info_t round_info = {
         .winner = "n/a",
@@ -84,6 +89,8 @@ unsigned short int rpse_gamemode_pve(user_input_data_t *input_data, struct times
 
         input_data->interval[0] = 1;
         input_data->interval[1] = 4;
+        input_data->buffer_size = 2;
+        
         rpse_io_int(input_data, false, "Select a move by it's number: ");
         printf("\n");
         round_info.p1_move = --input_data->input.int_input;
@@ -109,13 +116,15 @@ unsigned short int rpse_gamemode_pve(user_input_data_t *input_data, struct times
         if (round_info.p1_wins == 3 || round_info.p2_wins == 3) {
             switch(rpse_logic_endOfGameMenu(input_data, ts)) {
                 case 1:
+                    rpse_logic_prepNewMatch(&round_info);
                     break;
                 case 2:
+                    rpse_logic_prepNewMatch(&round_info);
                     rpse_logic_redoMoves(input_data, move_data);
+                    rpse_gamemode_static_roundStartCountdown(ts);
                     break;
                 case 3:
                     rpse_logic_freeMoveData(move_data);
-                    /* rpse_logic_freeWinner(&round_info); */
 
                     return 0;
                 case 4:
@@ -125,7 +134,6 @@ unsigned short int rpse_gamemode_pve(user_input_data_t *input_data, struct times
         }
     }
     rpse_logic_freeMoveData(move_data);
-    /* rpse_logic_freeWinner(&round_info); */
 
     return 2;
 }

@@ -39,7 +39,7 @@ static void rpse_main_licenseStatement(void) { \
 }
 
 int main(void) {
-	printf("RPSe Open Beta 1.\n");
+	printf("RPSe v0.1.0-alpha.1.\n");
 	rpse_main_licenseStatement();
 	rpse_io_enterToContinue();
 

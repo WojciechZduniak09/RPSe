@@ -47,6 +47,7 @@ void rpse_logic_getWinner(round_info_t *round_info, move_data_t *move_data);
 void rpse_logic_roundSummary(round_info_t *round_info, move_data_t *move_data, char player_names[2][31], \
 	struct timespec *ts);
 unsigned short int rpse_logic_endOfGameMenu(user_input_data_t *input_data, struct timespec *ts);
+void rpse_logic_prepNewMatch(round_info_t *round_info);
 
 #endif
 

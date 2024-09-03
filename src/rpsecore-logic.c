@@ -120,6 +120,8 @@ move_data_t* rpse_logic_setUpMoves(user_input_data_t *input_data, struct timespe
 	rpse_error_checkStringMalloc(new_move_data->move_names[3]);
 
 	strcpy(new_move_data->move_names[3], input_data->input.str_input);
+	free(input_data->input.str_input);
+	input_data->input.str_input = NULL;
 	
 	rpse_logic_static_makeCustomMoveRelations(input_data, new_move_data);
 
@@ -139,6 +141,8 @@ void rpse_logic_redoMoves(user_input_data_t *input_data, move_data_t *move_data)
 	rpse_error_checkStringMalloc(move_data->move_names[3]);
 
 	strcpy(move_data->move_names[3], input_data->input.str_input);
+	free(input_data->input.str_input);
+	input_data->input.str_input = NULL;
 
 	rpse_logic_static_makeCustomMoveRelations(input_data, move_data);
 }
@@ -159,11 +163,7 @@ void rpse_logic_getWinner(round_info_t *round_info, move_data_t *move_data) {
 	bool player1_element_match, player2_element_match;
 	unsigned short int player1_combination[2] = {round_info->p1_move, round_info->p2_move};
 	unsigned short int player2_combination[2] = {round_info->p2_move, round_info->p1_move};
-/*
-	if (round_info->winner != NULL) {
-		rpse_logic_freeWinner(round_info);
-	}
-*/
+
 	for (unsigned short int array_index = 0; array_index < 6; array_index++) {
 		player1_element_match = (player1_combination[0] == move_data->winning_combinations[array_index][0] && \
 			player1_combination[1] == move_data->winning_combinations[array_index][1]);
@@ -173,38 +173,19 @@ void rpse_logic_getWinner(round_info_t *round_info, move_data_t *move_data) {
 		
 		if (player1_element_match) {
 			round_info->p1_wins++;
-/*
- *			round_info->winner = malloc(sizeof(char) * 3);
- *			rpse_error_checkStringMalloc(round_info->winner);
-*/
 			strcpy(round_info->winner, "p1");
 			break;
 		}
 		else if (player2_element_match) {
 			round_info->p2_wins++;
-/*
- *			round_info->winner = malloc(sizeof(char) * 3);
- *			rpse_error_checkStringMalloc(round_info->winner);
-*/
 			strcpy(round_info->winner, "p2");
 			break;
 		}
 		else if (!player1_element_match && !player2_element_match && array_index == 5) {
-/*
- *			round_info->winner = malloc(sizeof(char) * 4);
- *			rpse_error_checkStringMalloc(round_info->winner);
-*/
 			strcpy(round_info->winner, "NOBODY");
 		}
 	}
 }
-
-/*
- * void rpse_logic_freeWinner(round_info_t *round_info) {
- *     free(round_info->winner);
- *     round_info->winner = NULL;
- * }
-*/
 
 void rpse_logic_roundSummary(round_info_t *round_info, move_data_t *move_data, char player_names[2][31], \
 struct timespec *ts) {
@@ -239,7 +220,7 @@ struct timespec *ts) {
 unsigned short int rpse_logic_endOfGameMenu(user_input_data_t *input_data, struct timespec *ts) {
 	const char MENU_OPTIONS[4][28] = {"Replay", "Edit custom move & replay", "Change gamemode", "Exit game"};
 
-	printf("----- END OF GAME MENU -----\n");
+	printf("<----- END OF GAME MENU ----->\n");
 	rpse_logic_wait(500, ts);
 	for (unsigned short int menu_element_index = 0; menu_element_index < 4; menu_element_index++) {
 		rpse_logic_wait(500, ts);
@@ -250,4 +231,9 @@ unsigned short int rpse_logic_endOfGameMenu(user_input_data_t *input_data, struc
 	rpse_io_int(input_data, false, "Choose an option by it's number: ");
 
 	return input_data->input.int_input;
+}
+
+void rpse_logic_prepNewMatch(round_info_t *round_info) {
+	round_info->p1_wins = round_info->p2_wins = 0;
+	round_info->round_num = 1;
 }
