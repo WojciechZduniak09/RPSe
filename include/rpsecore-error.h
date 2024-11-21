@@ -21,6 +21,7 @@
 #include "rpsecore-dll.h"
 #include "rpsecore-moveDef.h"
 #include <stdbool.h>
+#include <pthread.h>
 #include <stdio.h>
 
 void rpse_error_blameDev(void);
@@ -35,8 +36,11 @@ void rpse_error_checkMoveDataMalloc(move_data_t *target_move_data);
 
 void rpse_error_checkSocketOpRetVal(const int RET_VAL, int *sockfd);
 
-void rpse_error_checkLessThan0RetVal(const int RET_VAL);
+void rpse_error_checkThreadCreation(pthread_t thread);
 
+void rpse_error_checkuShortMalloc(unsigned short int *target_ushort);
+
+void rpse_error_checkLessThan0RetVal(const int RET_VAL);
 void rpse_error_checkFileExistance(FILE *fptr);
 
 #endif
