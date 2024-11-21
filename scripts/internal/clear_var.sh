@@ -15,15 +15,5 @@
 # You should have received a copy of the GNU General Public License along with RPSe.
 # If not, see <https://www.gnu.org/licenses/>.
 
-# To be run from RPSe/
-check_directory() {
-	if [ ! -d "$1" ]; then
-		echo "Directory $1/ not found!"
-		mkdir "$1"
-		echo "Directory $1/ has been created!"
-	fi
-}
-
-check_directory "bin"
-check_directory "bin/objects"
-check_directory "var"
+# To be run from RPSe/bin/
+rm -rf ../var/

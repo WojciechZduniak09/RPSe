@@ -15,26 +15,19 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_IO_H
-#define RPSECORE_IO_H
+#ifndef RPSECORE_MOVEDEF_H
+#define RPSECORE_MOVEDEF_H
 
-#include <stdbool.h>
+#include "rpsecore-io.h"
 
 typedef struct
 {
-    union input
-    {
-        int int_input;
-        char char_input;
-        char *str_input;
-    } input;
-    int interval[2];
-    unsigned short int buffer_size;
-} user_input_data_t;
+	char **move_names;
+	unsigned short int winning_combinations[6][2];
+} move_data_t;
 
-unsigned short int rpse_io_enterToContinue(void);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
+move_data_t* rpse_moveDef_setUpMoves(user_input_data_t *input_data);
+void rpse_moveDef_redoMoves(user_input_data_t *input_data, move_data_t *move_data);
+void rpse_moveDef_freeMoveData(move_data_t *move_data);
 
 #endif

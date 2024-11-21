@@ -26,31 +26,55 @@ all: dir_check bin/RPSe
 dir_check:
 	@scripts/internal/dir_check.sh
 
-bin/objects/rpsecore-io.o: src/rpsecore-io.c include/rpsecore-io.h
-	@echo "${GREEN_FG}Compiling rpsecore-io...${RESET}"
-	@$(COMPILER) $(CFLAGS) -c $< -o $@
+bin/objects/rpsecore-broadcast.o: src/rpsecore-broadcast.c include/rpsecore-broadcast.h
+	@echo "${GREEN_FG}Compiling rpsecore-broadcast...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
+
+bin/objects/rpsecore-dll.o: src/rpsecore-dll.c include/rpsecore-dll.h
+	@echo "${GREEN_FG}Compiling rpsecore-dll...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
 
 bin/objects/rpsecore-error.o: src/rpsecore-error.c include/rpsecore-error.h
 	@echo "${GREEN_FG}Compiling rpsecore-error...${RESET}"	
-	@$(COMPILER) $(CFLAGS) -c $< -o $@
+	$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/rpsecore-logic.o: src/rpsecore-logic.c include/rpsecore-logic.h
-	@echo "${GREEN_FG}Compiling rpsecore-logic...${RESET}"	
-	@$(COMPILER) $(CFLAGS) -c $< -o $@
+bin/objects/rpsecore-gamemode1.o: src/rpsecore-gamemode1.c include/rpsecore-gamemode1.h
+	@echo "${GREEN_FG}Compiling rpsecore-gamemode1...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/rpsecore-gamemode.o: src/rpsecore-gamemode.c include/rpsecore-gamemode.h
-	@echo "${GREEN_FG}Compiling rpsecore-gamemode...${RESET}"	
-	@$(COMPILER) $(CFLAGS) -c $< -o $@
+bin/objects/rpsecore-gamemode2.o: src/rpsecore-gamemode2.c include/rpsecore-gamemode2.h
+	@echo "${GREEN_FG}Compiling rpsecore-gamemode2...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/main.o: src/main.c include/rpsecore-io.h include/rpsecore-error.h include/rpsecore-logic.h \
-include/rpsecore-gamemode.h
+bin/objects/rpsecore-gamemodeMenus.o: src/rpsecore-gamemodeMenus.c include/rpsecore-gamemodeMenus.h
+	@echo "${GREEN_FG}Compiling rpsecore-gamemodeMenus...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
+
+bin/objects/rpsecore-io.o: src/rpsecore-io.c include/rpsecore-io.h
+	@echo "${GREEN_FG}Compiling rpsecore-io...${RESET}"
+	$(COMPILER) $(CFLAGS) -c $< -o $@
+
+bin/objects/rpsecore-moveDef.o: src/rpsecore-moveDef.c include/rpsecore-moveDef.h
+	@echo "${GREEN_FG}Compiling rpsecore-moveDef...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
+
+bin/objects/rpsecore-roundCalc.o: src/rpsecore-roundCalc.c include/rpsecore-roundCalc.h
+	@echo "${GREEN_FG}Compiling rpsecore-roundCalc...${RESET}"	
+	$(COMPILER) $(CFLAGS) -c $< -o $@
+
+bin/objects/main.o: src/main.c include/rpsecore-io.h include/rpsecore-error.h \
+					include/rpsecore-gamemodeMenus.h include/rpsecore-gamemode1.h \
+					include/rpsecore-gamemode2.h
 	@echo "${GREEN_FG}Compiling main...${RESET}"
-	@$(COMPILER) $(CFLAGS) -c $< -o $@
+	$(COMPILER) $(CFLAGS) -c $< -o $@
 	
-bin/RPSe: bin/objects/main.o bin/objects/rpsecore-io.o bin/objects/rpsecore-error.o bin/objects/rpsecore-logic.o \
-bin/objects/rpsecore-gamemode.o
+bin/RPSe: bin/objects/main.o bin/objects/rpsecore-broadcast.o bin/objects/rpsecore-dll.o \
+		  bin/objects/rpsecore-error.o bin/objects/rpsecore-gamemode1.o \
+		  bin/objects/rpsecore-gamemode2.o bin/objects/rpsecore-gamemodeMenus.o \
+		  bin/objects/rpsecore-io.o bin/objects/rpsecore-moveDef.o \
+		  bin/objects/rpsecore-roundCalc.o
 	@echo "${GREEN_FG}Compiling RPSe...${RESET}"	
-	@$(COMPILER) $(CFLAGS) $^ -o $@
+	$(COMPILER) $(CFLAGS) $^ -o $@
 	@echo "${GREEN_FG}Compilation finished!${RESET}"
 		
 clean:

@@ -15,26 +15,26 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_IO_H
-#define RPSECORE_IO_H
+#ifndef RPSECORE_GAMEMODEMENUS_H
+#define RPSECORE_GAMEMODEMENUS_H
 
+#include "rpsecore-io.h"
+#include "rpsecore-moveDef.h"
+#include "rpsecore-roundCalc.h"
 #include <stdbool.h>
 
 typedef struct
 {
-    union input
-    {
-        int int_input;
-        char char_input;
-        char *str_input;
-    } input;
-    int interval[2];
-    unsigned short int buffer_size;
-} user_input_data_t;
+    const char PLAYER_1_NAME[31];
+    const char PLAYER_2_NAME[31];
+    bool player_1_ready;
+    bool player_2_ready;
+} player_data_t;
 
-unsigned short int rpse_io_enterToContinue(void);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
+unsigned short int rpse_gamemodeMenus_mainMenu(user_input_data_t *input_data);
+void rpse_gamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data);
+unsigned short int rpse_gamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool isForPvE);
+void rpse_gamemodeMenus_roundStartCountdown(void);
+char * rpse_gamemodeMenus_usernameMenu(user_input_data_t *input_data, const unsigned short int P2P_TYPE);
 
 #endif

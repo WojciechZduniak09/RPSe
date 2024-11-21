@@ -15,26 +15,23 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_IO_H
-#define RPSECORE_IO_H
+#ifndef RPSECORE_DLL_H
+#define RPSECORE_DLL_H
 
-#include <stdbool.h>
-
-typedef struct
+struct dll
 {
-    union input
-    {
-        int int_input;
-        char char_input;
-        char *str_input;
-    } input;
-    int interval[2];
-    unsigned short int buffer_size;
-} user_input_data_t;
+    struct dll *prev;
+    char *data;
+    struct dll *next;
+};
 
-unsigned short int rpse_io_enterToContinue(void);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
+typedef struct dll dll_node_t;
+
+dll_node_t* rpse_dll_createDLL(const char *DATA);
+void rpse_dll_insertAtDLLEnd(dll_node_t **head, const char *DATA);
+void rpse_dll_deleteAtDLLPostion(dll_node_t **head, const unsigned int DELETION_POSITION);
+void rpse_dll_deleteDLL(dll_node_t **head);
+void rpse_dll_deleteDLLDuplicateNodes(dll_node_t **head);
+unsigned int rpse_dll_getNodeCount(dll_node_t **head);
 
 #endif

@@ -23,28 +23,46 @@
 #include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 
-void rpse_io_static_tabBeforeInput(bool insertTabBeforeInput) {
-	if (insertTabBeforeInput == true) {
+/*
+================
+STATIC FUNCTIONS
+================
+*/
+
+static void
+_rpse_io_static_tabBeforeInput(bool insertTabBeforeInput)
+{
+	if (insertTabBeforeInput == true)
 		printf("\t");
-	}
 }
 
-void rpse_io_static_clearStdin(void) {
-	int c;
-	while ((c = getchar()) != '\n' && c != EOF) {};
-}
+/*
+===============
+INPUT FUNCTIONS
+===============
+*/
 
-void rpse_io_enterToContinue(void) {
+unsigned short int
+rpse_io_enterToContinue(void)
+{
 	static bool FIRST_CALL = true;
-	(FIRST_CALL == true) ? FIRST_CALL = false : getchar();
+
+	if (FIRST_CALL == true)
+		FIRST_CALL = false;
+	else
+		getchar();
 
 	printf("Press enter to continue . . . ");
 	getchar();	
 	printf("\n");
+
+	return 0;
 }
 
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input) {
-	rpse_io_static_tabBeforeInput(insert_tab_before_input);
+void
+rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
+{
+	_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 
 	input_data->input.str_input = malloc(input_data->buffer_size);
 	rpse_error_checkStringMalloc(input_data->input.str_input);
@@ -59,29 +77,29 @@ void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input) {
 	rpse_error_checkStringMalloc(input_data->input.str_input);
 }
 
-// Function to be deprecated in a future version.
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char* prompt) {
-	if (input_data->interval[0] > input_data->interval[1]) {
+void
+rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt)
+{
+	if (input_data->interval[0] > input_data->interval[1])
 		rpse_error_blameDev();
-	}
 	
 	printf("%s", prompt);
-	rpse_io_static_tabBeforeInput(insert_tab_before_input);
+	_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 	scanf(" %d", &input_data->input.int_input);
 
-	while (input_data->input.int_input < input_data->interval[0] || \
-			input_data->input.int_input > input_data->interval[1]) {
-				getchar();
+	while (input_data->input.int_input < input_data->interval[0] ||
+		   input_data->input.int_input > input_data->interval[1])
+		{
+		getchar();
 				
-				fprintf(stderr, "Invalid input! Input must be a whole number in range of %d-%d.\n", \
-						input_data->interval[0], input_data->interval[1]);
+		fprintf(stderr, "Invalid input! Input must be a whole number in range of %d-%d.\n",
+				input_data->interval[0], input_data->interval[1]);
 
-				rpse_io_static_tabBeforeInput(insert_tab_before_input);
+		_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 
-				printf("%s", prompt);
-				scanf(" %d", &input_data->input.int_input);
-		
-	}
+		printf("%s", prompt);
+		scanf(" %d", &input_data->input.int_input);
+		}
 }
 
 
@@ -114,17 +132,21 @@ void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, ch
 */
 
 
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input) {
-	rpse_io_static_tabBeforeInput(insert_tab_before_input);
+void
+rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input)
+{
+	_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 	
 	input_data->input.char_input = tolower(getchar());
 
-	while (input_data->input.char_input != 'y' && input_data->input.char_input != 'n') {
+	while (input_data->input.char_input != 'y' && input_data->input.char_input != 'n')
+		{
 		getchar();
 		fprintf(stderr, "Invalid input! Insert 'y' for yes or 'n' for no.\n");
 
-		rpse_io_static_tabBeforeInput(insert_tab_before_input);
+		_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 		input_data->input.char_input = tolower(getchar());
-	}
+		}
+		
 	getchar();
 }

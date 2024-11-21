@@ -15,26 +15,11 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_IO_H
-#define RPSECORE_IO_H
+#ifndef RPSECORE_SETUP_H
+#define RPSECORE_SETUP_H
 
-#include <stdbool.h>
-
-typedef struct
-{
-    union input
-    {
-        int int_input;
-        char char_input;
-        char *str_input;
-    } input;
-    int interval[2];
-    unsigned short int buffer_size;
-} user_input_data_t;
-
-unsigned short int rpse_io_enterToContinue(void);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
+char** move_name_creation(union user_input *p_union);
+void move_name_realloc(char **p_move_arr, union user_input *p_usr_in);
+void move_4_combination_creation(struct move_4_combinations *p_m4_com, union user_input *p_usr_in);
 
 #endif

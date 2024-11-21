@@ -15,26 +15,20 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_IO_H
-#define RPSECORE_IO_H
+#include "../include/rpsecore-gamemode1.h"
+#include <unistd.h>
+#include <stdio.h>
 
-#include <stdbool.h>
+/*
+============
+PVP FUNCTION
+============
+*/
 
-typedef struct
+unsigned short int
+rpse_gamemode1_pvp(void)
 {
-    union input
-    {
-        int int_input;
-        char char_input;
-        char *str_input;
-    } input;
-    int interval[2];
-    unsigned short int buffer_size;
-} user_input_data_t;
-
-unsigned short int rpse_io_enterToContinue(void);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
-
-#endif
+    printf("This gamemode is still a work in progress, please try again in a future update.\n");
+    sleep(3);
+    return 0;
+}

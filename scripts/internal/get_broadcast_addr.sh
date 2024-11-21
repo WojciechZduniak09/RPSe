@@ -15,15 +15,10 @@
 # You should have received a copy of the GNU General Public License along with RPSe.
 # If not, see <https://www.gnu.org/licenses/>.
 
-# To be run from RPSe/
-check_directory() {
-	if [ ! -d "$1" ]; then
-		echo "Directory $1/ not found!"
-		mkdir "$1"
-		echo "Directory $1/ has been created!"
-	fi
-}
+# To be run from RPSe/bin/
+TARGET_FILE_PATH="../.broadcast_address.txt"
 
-check_directory "bin"
-check_directory "bin/objects"
-check_directory "var"
+rm -rf "$TARGET_FILE_PATH"
+touch "$TARGET_FILE_PATH"
+
+ip addr show | grep brd | grep inet | awk '{print $4}' > "$BROADCAST_ADDRESS"

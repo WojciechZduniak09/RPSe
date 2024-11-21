@@ -15,26 +15,24 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_IO_H
-#define RPSECORE_IO_H
+#ifndef RPSECORE_ROUNDCALC_H
+#define RPSECORE_ROUNDCALC_H
 
+#include "rpsecore-moveDef.h"
 #include <stdbool.h>
 
 typedef struct
 {
-    union input
-    {
-        int int_input;
-        char char_input;
-        char *str_input;
-    } input;
-    int interval[2];
-    unsigned short int buffer_size;
-} user_input_data_t;
+	char winner[7];
+	unsigned short int round_num;
+	unsigned short int p1_wins;
+	unsigned short int p1_move;
+	unsigned short int p2_wins;
+	unsigned short int p2_move;
+	bool replay;
+} round_info_t;
 
-unsigned short int rpse_io_enterToContinue(void);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
+void rpse_roundCalc_getWinner(round_info_t *round_info, move_data_t *move_data);
+void rpse_roundCalc_prepNewMatch(round_info_t *round_info);
 
 #endif

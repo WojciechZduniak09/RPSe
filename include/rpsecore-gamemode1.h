@@ -15,14 +15,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RPSECORE_GAMEMODE_H
-#define RPSECORE_GAMEMODE_H
+#ifndef RPSECORE_GAMEMODE1_H
+#define RPSECORE_GAMEMODE1_H
 
-#include "rpsecore-io.h"
-#include <time.h>
-
-unsigned short int rpse_gamemode_menu(user_input_data_t *input_data);
-unsigned short int rpse_gamemode_pve(user_input_data_t *input_data, struct timespec *ts);
-unsigned short int rpse_gamemode_pvp(struct timespec *ts);
+unsigned short int rpse_gamemode1_pvp(void);
 
 #endif

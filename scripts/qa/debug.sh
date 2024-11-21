@@ -21,7 +21,7 @@ RED_FG=`tput setaf 1`
 RESET=`tput sgr0`
 
 # Setting up RPSe executable.
-echo "${RED_FG}This debug menu is obsolete, a new one may be developed in the future${RESET}"
+echo "${RED_FG}This debug menu has been discontinued, a new one may be developed in the future${RESET}"
 sleep 3.5
 cd ../../
 make clean

@@ -14,10 +14,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 bin/
-services/
 obsolete/
 .TODO.md
 .RELEASE.md
 .vscode/
-docs/ 
-# Documentation for code will be included in docs/ at a later time
