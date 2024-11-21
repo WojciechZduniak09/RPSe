@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <pthread.h>
 #include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 
@@ -57,6 +58,27 @@ rpse_io_enterToContinue(void)
 	printf("\n");
 
 	return 0;
+}
+
+/* Pointer must be freed by caller */
+void *
+rpse_io_threadedEnterToContinue(void)
+{
+	static bool FIRST_CALL = true;
+
+	if (FIRST_CALL == true)
+		FIRST_CALL = false;
+	else
+		getchar();
+
+	printf("Press enter to continue . . . ");
+	getchar();	
+	printf("\n");
+
+	unsigned short int *ret_val = malloc(sizeof(unsigned short int));
+	rpse_error_checkuShortMalloc(ret_val);
+
+	pthread_exit(ret_val);
 }
 
 void

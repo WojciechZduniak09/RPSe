@@ -20,9 +20,11 @@
 #include "../include/rpsecore-moveDef.h"
 #include "../include/rpsecore-broadcast.h"
 #include "../include/rpsecore-dll.h"
+#include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <string.h>
 
 #include <stdio.h>
@@ -70,7 +72,7 @@ rpse_gamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data
 	printf("Winner: %s.\n", round_info->winner);
 	sleep(0.35);
 
-    /* Player 1 data */// 15 seconds
+    /* Player 1 data */
 
 	printf("%s's info:\n", player_data->PLAYER_1_NAME);
 	sleep(0.35);
@@ -94,11 +96,29 @@ rpse_gamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data
 
     /* 15 second auto-close if there is no input */
 
-    printf("\nThis menu will auto-close it 15 seconds.\n");
+    printf("\nThis menu will auto-close in 15 seconds.\n");
 
     time_t start_time = time(NULL);
+    unsigned short int *ret_val;
+    int status = -1;
+    
+    pthread_t thread;
+    rpse_error_checkThreadCreation(thread);
 
-    while (rpse_io_enterToContinue() != 0 && difftime(time(NULL), start_time) < 15);
+    pthread_create(&thread, NULL, rpse_io_threadedEnterToContinue(), NULL);
+
+    while (difftime(time(NULL), start_time) < 15)
+        {
+        status = pthread_join(thread, (void **)&ret_val);
+        if (status == 0)
+            break;
+        }
+        
+    if (status != 0)
+        {
+        pthread_cancel(thread);
+        printf("Auto-closing menu...");
+        }
 }
 
 unsigned short int

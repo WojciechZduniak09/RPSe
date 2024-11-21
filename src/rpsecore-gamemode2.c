@@ -56,7 +56,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
         printf("<----- ROUND %u ----->\n\n", round_info.round_num);
         sleep(0.5);
 
-        printf("<---- PLAYER'S TURN ---->\n");
+        printf("<---- PLAYER'S TURN ---->\n\n");
         sleep(0.5);
 
         printf("<--- Move options --->\n");
@@ -85,7 +85,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
             {
             printf(". ");
             fflush(stdout);
-            sleep(6.7);
+            sleep(1);
             }
         
         printf("\n\n<--- DONE --->\n\n");

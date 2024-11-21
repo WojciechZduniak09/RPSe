@@ -131,6 +131,40 @@ rpse_error_checkSocketOpRetVal(const int RET_VAL, int *sockfd)
 }
 
 /*
+==================
+THREADED FUNCTIONS
+==================
+*/
+
+void
+rpse_error_checkThreadCreation(pthread_t thread)
+{
+    if (thread)
+        {
+        _rpse_error_errorMessage("thread creation");
+        exit(1);
+        }
+}
+
+/*
+============
+INT FUNCTION
+============
+
+I can't believe that this part is actualy necessary
+*/
+
+void
+rpse_error_checkuShortMalloc(unsigned short int *target_ushort)
+{
+    if (target_ushort == NULL)
+        {
+        _rpse_error_errorMessage("allocation of a ushort");
+        exit(1);
+        }
+}
+
+/*
 =======================
 MISCELLANEOUS FUNCTIONS
 =======================
