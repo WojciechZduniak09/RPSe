@@ -26,4 +26,3 @@ check_directory() {
 
 check_directory "bin"
 check_directory "bin/objects"
-check_directory "var"
