@@ -45,9 +45,8 @@ Now, you can just go to ```RPSe/bin/``` and run RPSe by typing ```./RPSe``` in y
 Note: running ```make clean``` to uninstall RPSe removes the entire ```RPSe/bin/``` directory!
 
 ## List of contributors ##
-1. Boyek1997
+1. WojciechZduniak09 (Wojciech Zduniak)
     * Documentation.
     * Code.
-    * Makefile.
-2. mz7mz7mz7
-    * Pre-GPL3-licensing .gitignore file.
+2. mz7mz7mz7 (Marcin Zduniak)
+    * Prior .gitignore file.
