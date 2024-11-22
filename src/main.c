@@ -16,7 +16,7 @@
  */
 
 #include "../include/rpsecore-io.h"
-#include "../include/rpsecore-gamemodeMenus.h"
+#include "../include/rpsecore-sharedGamemodeMenus.h"
 #include "../include/rpsecore-gamemode1.h"
 #include "../include/rpsecore-gamemode2.h"
 #include "../include/rpsecore-error.h"
@@ -48,6 +48,22 @@ _rpse_main_licenseStatement(void)
 			"If not, see <https://www.gnu.org/licenses/>.\n\n");
 }
 
+static unsigned short int
+_rpse_main_mainMenu(user_input_data_t *input_data)
+{
+    printf("<----- Main menu ----->\n"
+            "1. Player vs Player (PvP - WIP).\n"
+            "2. Player vs Bot (PvE).\n\n");
+
+    input_data->interval[0] = 1;
+    input_data->interval [1] = 2;
+    input_data->buffer_size = 2;
+    
+    rpse_io_int(input_data, false, "Select a gamemode by it's number: ");
+
+    return input_data->input.int_input;
+}
+
 /*
 =============
 MAIN FUNCTION
@@ -72,7 +88,7 @@ main(void)
 
 	do
 		{
-		selected_gamemode = rpse_gamemodeMenus_mainMenu(input_data);
+		selected_gamemode = _rpse_main_mainMenu(input_data);
 		}
 	while ((selected_gamemode == 1) ? rpse_gamemode1_pvp() : rpse_gamemode2_pve(input_data) != 2);
 

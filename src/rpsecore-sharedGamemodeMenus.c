@@ -15,7 +15,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../include/rpsecore-gamemodeMenus.h"
+#include "../include/rpsecore-sharedGamemodeMenus.h"
 #include "../include/rpsecore-roundCalc.h"
 #include "../include/rpsecore-moveDef.h"
 #include "../include/rpsecore-broadcast.h"
@@ -37,24 +37,8 @@ NON-MOVE-DEFINING MENUS
 For move-defining menus, refer to rpsecore-moveDef.c
 */
 
-unsigned short int
-rpse_gamemodeMenus_mainMenu(user_input_data_t *input_data)
-{
-    printf("<----- Main menu ----->\n"
-            "1. Player vs Player (PvP - WIP).\n"
-            "2. Player vs Bot (PvE).\n\n");
-
-    input_data->interval[0] = 1;
-    input_data->interval [1] = 2;
-    input_data->buffer_size = 2;
-    
-    rpse_io_int(input_data, false, "Select a gamemode by it's number: ");
-
-    return input_data->input.int_input;
-}
-
 void
-rpse_gamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data)
+rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data)
 {
 	if (strncmp(round_info->winner, "p1", 3) == 0)
         strcpy(round_info->winner, player_data->PLAYER_1_NAME);
@@ -122,7 +106,7 @@ rpse_gamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data
 }
 
 unsigned short int
-rpse_gamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_for_pve)
+rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_for_pve)
 {
 	const char PVE_MENU_OPTIONS[4][28] = {"Replay", "Edit custom move & replay", 
                                       "Return to main menu", "Exit RPSe"};
@@ -162,7 +146,7 @@ rpse_gamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_for_pve)
 }
 
 void
-rpse_gamemodeMenus_roundStartCountdown(void)
+rpse_sharedGamemodeMenus_roundStartCountdown(void)
 {
     printf("The game will start in 3");
     fflush(stdout);
@@ -177,31 +161,4 @@ rpse_gamemodeMenus_roundStartCountdown(void)
 
     printf(", 0.\n");
     sleep(1);
-}
-
-/* HOST OR PLAYER FUNCTION HERE */
-
-/* char * must be freed by caller */
-char *
-rpse_gamemodeMenus_usernameMenu(user_input_data_t *input_data, const unsigned short int P2P_TYPE)
-{
-    bool exact_match_found = false;
-    do
-        {
-        printf("Insert a username for your player: ");
-        
-        rpse_io_str(input_data, false);
-
-        dll_node_t *head = rpse_broadcast_receiveBroadcast();
-        rpse_dll_deleteDLLDuplicateNodes(&head);
-        exact_match_found = rpse_broadcast_verifyDLLStructure(&head, P2P_TYPE, input_data->input.str_input);
-
-        if (exact_match_found)
-            printf("This username has already been taken, please try again.\n");
-        
-        rpse_dll_deleteDLL(&head);
-    }
-    while (exact_match_found);
-    
-    return input_data->input.str_input;
 }

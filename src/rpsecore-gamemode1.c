@@ -16,8 +16,43 @@
  */
 
 #include "../include/rpsecore-gamemode1.h"
+#include "../include/rpsecore-io.h"
+#include "../include/rpsecore-broadcast.h"
+#include "../include/rpsecore-dll.h"
 #include <unistd.h>
 #include <stdio.h>
+#include <stdbool.h>
+
+/*
+================
+STATIC FUNCTIONS
+================
+*/
+
+/* char * must be freed by caller */
+static char *
+_rpse_gamemode1_usernameMenu(user_input_data_t *input_data, const unsigned short int P2P_TYPE)
+{
+    bool exact_match_found = false;
+    do
+        {
+        printf("Insert a username for your player: ");
+        
+        rpse_io_str(input_data, false);
+
+        dll_node_t *head = rpse_broadcast_receiveBroadcast();
+        rpse_dll_deleteDLLDuplicateNodes(&head);
+        exact_match_found = rpse_broadcast_verifyDLLStructure(&head, P2P_TYPE, input_data->input.str_input);
+
+        if (exact_match_found)
+            printf("This username has already been taken, please try again.\n");
+        
+        rpse_dll_deleteDLL(&head);
+    }
+    while (exact_match_found);
+    
+    return input_data->input.str_input;
+}
 
 /*
 ============

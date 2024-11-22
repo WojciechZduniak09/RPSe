@@ -31,10 +31,8 @@ typedef struct
     bool player_2_ready;
 } player_data_t;
 
-unsigned short int rpse_gamemodeMenus_mainMenu(user_input_data_t *input_data);
-void rpse_gamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data);
-unsigned short int rpse_gamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool isForPvE);
-void rpse_gamemodeMenus_roundStartCountdown(void);
-char * rpse_gamemodeMenus_usernameMenu(user_input_data_t *input_data, const unsigned short int P2P_TYPE);
+void rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data);
+unsigned short int rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool isForPvE);
+void rpse_sharedGamemodeMenus_roundStartCountdown(void);
 
 #endif

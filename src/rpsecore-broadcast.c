@@ -42,6 +42,7 @@ Fast explanation
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <string.h>
 #include <regex.h>
 #include <time.h>
@@ -275,6 +276,8 @@ rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA)
     while (broadcaster_termination_flag == 0);
 
     signal(SIGUSR1, SIG_DFL);
+
+    pthread_exit(NULL);
 }
 
 /* Must be threaded to exit, view header for P2P types */
@@ -297,4 +300,6 @@ rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE)
     while (receiver_termination_flag == 0);
 
     signal(SIGUSR2, SIG_DFL);
+
+    pthread_exit(NULL);
 }

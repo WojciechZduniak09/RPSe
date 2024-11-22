@@ -46,8 +46,8 @@ bin/objects/rpsecore-gamemode2.o: src/rpsecore-gamemode2.c include/rpsecore-game
 	@echo "${GREEN_FG}Compiling rpsecore-gamemode2...${RESET}"	
 	$(COMPILER) $(CFLAGS) -c $< -o $@
 
-bin/objects/rpsecore-gamemodeMenus.o: src/rpsecore-gamemodeMenus.c include/rpsecore-gamemodeMenus.h
-	@echo "${GREEN_FG}Compiling rpsecore-gamemodeMenus...${RESET}"	
+bin/objects/rpsecore-sharedGamemodeMenus.o: src/rpsecore-sharedGamemodeMenus.c include/rpsecore-sharedGamemodeMenus.h
+	@echo "${GREEN_FG}Compiling rpsecore-sharedGamemodeMenus...${RESET}"	
 	$(COMPILER) $(CFLAGS) -c $< -o $@
 
 bin/objects/rpsecore-io.o: src/rpsecore-io.c include/rpsecore-io.h
@@ -63,14 +63,14 @@ bin/objects/rpsecore-roundCalc.o: src/rpsecore-roundCalc.c include/rpsecore-roun
 	$(COMPILER) $(CFLAGS) -c $< -o $@
 
 bin/objects/main.o: src/main.c include/rpsecore-io.h include/rpsecore-error.h \
-					include/rpsecore-gamemodeMenus.h include/rpsecore-gamemode1.h \
+					include/rpsecore-sharedGamemodeMenus.h include/rpsecore-gamemode1.h \
 					include/rpsecore-gamemode2.h
 	@echo "${GREEN_FG}Compiling main...${RESET}"
 	$(COMPILER) $(CFLAGS) -c $< -o $@
 	
 bin/RPSe: bin/objects/main.o bin/objects/rpsecore-broadcast.o bin/objects/rpsecore-dll.o \
 		  bin/objects/rpsecore-error.o bin/objects/rpsecore-gamemode1.o \
-		  bin/objects/rpsecore-gamemode2.o bin/objects/rpsecore-gamemodeMenus.o \
+		  bin/objects/rpsecore-gamemode2.o bin/objects/rpsecore-sharedGamemodeMenus.o \
 		  bin/objects/rpsecore-io.o bin/objects/rpsecore-moveDef.o \
 		  bin/objects/rpsecore-roundCalc.o
 	@echo "${GREEN_FG}Compiling RPSe...${RESET}"	
