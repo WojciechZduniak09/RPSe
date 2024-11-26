@@ -26,8 +26,28 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
-
 #include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+
+#define TIMEOUT 15 /* seconds */
+
+pthread_t enterToContinue_thread_ID;
+
+/*
+================
+STATIC FUNCTIONS
+================
+*/
+
+static void
+_rpse_sharedGamemodeMenus_terminateEnterToContinue(int required_parameter_by_signal_h)
+{
+    /* Random stuff to stop GCC's hour-long complaining */
+    required_parameter_by_signal_h++;
+    pthread_cancel(enterToContinue_thread_ID);
+    printf("\nAuto-closing menu...\n\n");
+}
 
 /*
 =======================
@@ -37,8 +57,10 @@ NON-MOVE-DEFINING MENUS
 For move-defining menus, refer to rpsecore-moveDef.c
 */
 
+/* View rpsecore-sharedGamemodeMenus.h for player numbers */
 void
-rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data)
+rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data,
+                                      const unsigned short int PLAYER_NUMBER)
 {
 	if (strncmp(round_info->winner, "p1", 3) == 0)
         strcpy(round_info->winner, player_data->PLAYER_1_NAME);
@@ -80,29 +102,25 @@ rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *mov
 
     /* 15 second auto-close if there is no input */
 
-    printf("\nThis menu will auto-close in 15 seconds.\n");
+    printf("This menu will auto-close in 15 seconds.\n");
 
-    time_t start_time = time(NULL);
-    unsigned short int *ret_val;
-    int status = -1;
+    /* Thread is global */
+    int ret_val = pthread_create(&enterToContinue_thread_ID, NULL, &rpse_io_threadedEnterToContinue, NULL);
+    rpse_error_checkFirstThreadCreation(ret_val);
     
-    pthread_t thread;
-    rpse_error_checkThreadCreation(thread);
+    signal(SIGALRM, _rpse_sharedGamemodeMenus_terminateEnterToContinue);
 
-    pthread_create(&thread, NULL, rpse_io_threadedEnterToContinue(), NULL);
+    alarm(TIMEOUT);
 
-    while (difftime(time(NULL), start_time) < 15)
-        {
-        status = pthread_join(thread, (void **)&ret_val);
-        if (status == 0)
-            break;
-        }
-        
-    if (status != 0)
-        {
-        pthread_cancel(thread);
-        printf("Auto-closing menu...");
-        }
+    pthread_join(enterToContinue_thread_ID, NULL);
+
+    alarm(0);
+    signal(SIGALRM, SIG_DFL);
+
+    if (PLAYER_NUMBER == 1)
+        player_data->player_1_ready = true;
+    else
+        player_data->player_2_ready = true;
 }
 
 unsigned short int

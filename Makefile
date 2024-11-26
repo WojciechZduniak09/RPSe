@@ -52,7 +52,7 @@ bin/objects/rpsecore-sharedGamemodeMenus.o: src/rpsecore-sharedGamemodeMenus.c i
 
 bin/objects/rpsecore-io.o: src/rpsecore-io.c include/rpsecore-io.h
 	@echo "${GREEN_FG}Compiling rpsecore-io...${RESET}"
-	$(COMPILER) $(CFLAGS) -c $< -o $@
+	$(COMPILER) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 bin/objects/rpsecore-moveDef.o: src/rpsecore-moveDef.c include/rpsecore-moveDef.h
 	@echo "${GREEN_FG}Compiling rpsecore-moveDef...${RESET}"	

@@ -34,8 +34,11 @@ rpse_dll_createDLL(const char *DATA)
     rpse_error_checkDLLNodeMalloc(new_node);
 
     new_node->prev = NULL;
+
+	new_node->data = malloc(sizeof(char) * strlen(DATA) +1);
     strncpy(new_node->data, DATA, strlen(DATA)+1);
-    new_node->next = NULL;
+    
+	new_node->next = NULL;
 
     return new_node;
 }
@@ -108,37 +111,57 @@ void
 rpse_dll_deleteDLLDuplicateNodes(dll_node_t **head)
 {
 	rpse_error_checkDLLNodePtrMalloc(head);
-	dll_node_t *current = *head;
-	dll_node_t *runner = current->next;
 
-	while (current->next != NULL) 
+	dll_node_t *current_head_dll_node = *head;
+	dll_node_t *current_auxiliary_dll_node = rpse_dll_createDLL("Initialiser data for auxiliary DLL which cannot be used by other "
+																"functions as it's longer than the Great Wall of China.");
+	int current_head_dll_element_num = 1;
+
+	bool element_deleted = false;
+
+	while (current_head_dll_node != NULL)
 		{
-		runner = current->next;
-		while (runner->next != NULL)
+		if (current_head_dll_node->data == NULL)
 			{
-			if (strcmp(runner->data, current->data) == 0)
-				{
-				dll_node_t* tmp = runner;
-				
-				if (runner->next!=NULL)
-					runner->next->prev = runner->prev;
-
-				if (runner->prev!=NULL)
-					runner->prev->next = runner->next;
-				
-				runner = runner->next;
-				free(tmp);
-				tmp = NULL;
-
+			rpse_dll_deleteAtDLLPostion(head, current_head_dll_element_num);
+			element_deleted = true;
+			current_head_dll_node = current_head_dll_node->next;
 			}
-			else
-				runner = runner->next;
-			current = current->next;
+		
+		else
+			{
+			while (current_auxiliary_dll_node != NULL)
+				{
+				int max_str_size = (strlen(current_head_dll_node->data) > strlen(current_auxiliary_dll_node->data) ? 
+									strlen(current_head_dll_node->data) + 1 : strlen(current_auxiliary_dll_node->data) + 1);
+				
+				if (strncmp(current_head_dll_node->data, current_auxiliary_dll_node->data, max_str_size) == 0)
+				/* 0 means that they're equal */
+					{
+					rpse_dll_deleteAtDLLPostion(head, current_head_dll_element_num);
+					element_deleted = true;
+					}
+
+				if (element_deleted)
+					{
+					current_head_dll_element_num++;
+					element_deleted = false;
+					}
+				
+				current_auxiliary_dll_node = current_auxiliary_dll_node->next;
+				}
+
+		if (element_deleted)
+			{
+			current_head_dll_element_num++;
+			element_deleted = false;
+			}
+		
+
+		
+		current_head_dll_node = current_head_dll_node->next;
 			}
 		}
-	
-	current = NULL;
-	runner = NULL;
 }
 
 void

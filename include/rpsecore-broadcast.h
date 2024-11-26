@@ -44,9 +44,9 @@ Maximum values and names excluding \0
 -------
 Formats
 -------
-(1) For hosts looking for players
+(1) For hosts looking for players (deemed as player 1).
     - USERNAME@RPSe.P2P1/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)
-(2) For clients looking for game hosts.
+(2) For clients looking for game hosts (deemed as player 2).
     - USERNAME@RPSe.P2P2/invitesOn(IP)(PORT)
 */
 
@@ -61,7 +61,7 @@ typedef struct
 
 bool rpse_broadcast_verifyDLLStructure(dll_node_t **head, const unsigned short int P2P_TYPE, char *username);
 dll_node_t * rpse_broadcast_receiveBroadcast(void);
-void rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA);
-void rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE);
+void * rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA);
+void * rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE);
 
 #endif

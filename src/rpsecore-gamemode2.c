@@ -101,7 +101,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
             .player_2_ready = true /* The bot will obviously always be ready */
         };
 
-        rpse_sharedGamemodeMenus_roundSummary(&round_info, move_data, &player_data);
+        rpse_sharedGamemodeMenus_roundSummary(&round_info, move_data, &player_data, 1);
         round_info.round_num++;
 
         if (round_info.p1_wins == 3 || round_info.p2_wins == 3)

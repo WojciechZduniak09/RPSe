@@ -18,6 +18,8 @@
 #ifndef RPSECORE_GAMEMODE1_H
 #define RPSECORE_GAMEMODE1_H
 
-unsigned short int rpse_gamemode1_pvp(void);
+#include "rpsecore-io.h"
+
+unsigned short int rpse_gamemode1_pvp(user_input_data_t *input_data);
 
 #endif

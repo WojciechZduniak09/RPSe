@@ -24,14 +24,16 @@
 
 /*
 ================
-STATIC FUNCTIONS
+MESSAGE FUNCTION
 ================
 */
 
-static void 
-_rpse_error_errorMessage(const char* ACTION)
+void 
+rpse_error_errorMessage(const char* ACTION)
 {
-    fprintf(stderr, "Error detected during %s.\n"
+    fprintf(stderr, "\n/////////////////////////////////////////////\n"
+                    "Error detected during %s.\n"
+                    "/////////////////////////////////////////////\n"
                     "Possible plans of action, in order:\n"
                     "\t1. Reload RPSe.\n"
                     "\t2. Restart your system and reload RPSe.\n"
@@ -56,7 +58,7 @@ rpse_error_checkDLLNodePtrMalloc(dll_node_t **p_target_node)
 {
     if (*p_target_node == NULL)
         {
-        _rpse_error_errorMessage("allocation of a dll_node_t**");
+        rpse_error_errorMessage("allocation of a dll_node_t**");
         exit(1);
         }
 }
@@ -66,7 +68,7 @@ rpse_error_checkDLLNodeMalloc(dll_node_t *target_node)
 {
     if (target_node == NULL)
         {
-        _rpse_error_errorMessage("allocation of a dll_node_t*");
+        rpse_error_errorMessage("allocation of a dll_node_t*");
         exit(1);
         }
 }
@@ -82,7 +84,7 @@ rpse_error_checkStringMalloc(char *target_string)
 {
     if (target_string == NULL)
         {
-        _rpse_error_errorMessage("allocation of a char*");
+        rpse_error_errorMessage("allocation of a char*");
         exit(1);
         }
 }
@@ -92,7 +94,7 @@ rpse_error_checkStringArrayMalloc(char **target_str_arr)
 {
     if (target_str_arr == NULL)
         {
-        _rpse_error_errorMessage("allocation of a char**");
+        rpse_error_errorMessage("allocation of a char**");
         exit(1);
         }
 }
@@ -108,7 +110,7 @@ rpse_error_checkMoveDataMalloc(move_data_t *target_move_data)
 {
     if (target_move_data == NULL)
         {
-        _rpse_error_errorMessage("allocation of a move_data_t*");
+        rpse_error_errorMessage("allocation of a move_data_t*");
         exit(1);
         }
 }
@@ -125,7 +127,7 @@ rpse_error_checkSocketOpRetVal(const int RET_VAL, int *sockfd)
     if (RET_VAL < 0)
         {
         close(*sockfd);
-        _rpse_error_errorMessage("socket operation");
+        rpse_error_errorMessage("socket operation");
         exit(1);
         }
 }
@@ -137,11 +139,12 @@ THREADED FUNCTIONS
 */
 
 void
-rpse_error_checkThreadCreation(pthread_t thread)
+rpse_error_checkFirstThreadCreation(const int RET_VAL)
 {
-    if (thread)
+    if (RET_VAL != 0)
         {
-        _rpse_error_errorMessage("thread creation");
+        rpse_error_errorMessage("thread creation");
+
         exit(1);
         }
 }
@@ -159,7 +162,7 @@ rpse_error_checkuShortMalloc(unsigned short int *target_ushort)
 {
     if (target_ushort == NULL)
         {
-        _rpse_error_errorMessage("allocation of a ushort");
+        rpse_error_errorMessage("allocation of a ushort");
         exit(1);
         }
 }
@@ -174,7 +177,7 @@ void
 rpse_error_checkLessThan0RetVal(const int RET_VAL)
 {
     if (RET_VAL < 0)
-        _rpse_error_errorMessage("verification of a value to be less than 0");
+        rpse_error_errorMessage("verification of a value to be less than 0");
 }
 
 /* This function assumes that fopen() was used earlier */
@@ -184,7 +187,7 @@ rpse_error_checkFileExistance(FILE *fptr)
 {
     if (fptr == NULL)
         {
-        _rpse_error_errorMessage("search for a file (does not exist)");
+        rpse_error_errorMessage("search for a file (does not exist)");
         fclose(fptr);
         exit(1);
         }

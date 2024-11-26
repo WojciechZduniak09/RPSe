@@ -90,13 +90,7 @@ main(void)
 		{
 		selected_gamemode = _rpse_main_mainMenu(input_data);
 		}
-	while ((selected_gamemode == 1) ? rpse_gamemode1_pvp() : rpse_gamemode2_pve(input_data) != 2);
-
-	if (input_data->input.str_input != NULL)
-		{
-		free(input_data->input.str_input);
-		input_data->input.str_input = NULL;
-		}
+	while ((selected_gamemode == 1) ? rpse_gamemode1_pvp(input_data) : rpse_gamemode2_pve(input_data) != 2);
 
 	return 0;
 }

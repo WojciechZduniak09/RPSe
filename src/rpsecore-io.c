@@ -24,12 +24,13 @@
 #include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 
+bool enter_to_continue_first_call = true;
+
 /*
 ================
 STATIC FUNCTIONS
 ================
 */
-
 static void
 _rpse_io_static_tabBeforeInput(bool insertTabBeforeInput)
 {
@@ -46,13 +47,11 @@ INPUT FUNCTIONS
 unsigned short int
 rpse_io_enterToContinue(void)
 {
-	static bool FIRST_CALL = true;
-
-	if (FIRST_CALL == true)
-		FIRST_CALL = false;
+	if (enter_to_continue_first_call)
+		enter_to_continue_first_call = false;
 	else
 		getchar();
-
+	
 	printf("Press enter to continue . . . ");
 	getchar();	
 	printf("\n");
@@ -60,25 +59,21 @@ rpse_io_enterToContinue(void)
 	return 0;
 }
 
-/* Pointer must be freed by caller */
+/* No arguments truly needed */
 void *
-rpse_io_threadedEnterToContinue(void)
+rpse_io_threadedEnterToContinue(void *arg)
 {
-	static bool FIRST_CALL = true;
-
-	if (FIRST_CALL == true)
-		FIRST_CALL = false;
+	if (enter_to_continue_first_call)
+		enter_to_continue_first_call = false;
 	else
 		getchar();
-
+		
 	printf("Press enter to continue . . . ");
-	getchar();	
+	getchar();
 	printf("\n");
 
-	unsigned short int *ret_val = malloc(sizeof(unsigned short int));
-	rpse_error_checkuShortMalloc(ret_val);
-
-	pthread_exit(ret_val);
+	pthread_exit(NULL);
+	return NULL;
 }
 
 void

@@ -22,7 +22,6 @@ RESET=`tput sgr0`
 
 # Setting up RPSe executable.
 echo "${RED_FG}This debug menu has been discontinued, a new one may be developed in the future${RESET}"
-sleep 3.5
 cd ../../
 make clean
 make all
@@ -68,4 +67,4 @@ fi
 # Cleanup.
 cd ..
 make clean
-cd scripts/testing/
+cd scripts/qa/
