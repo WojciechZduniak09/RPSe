@@ -28,8 +28,8 @@ void rpse_error_errorMessage(const char* ACTION);
 
 void rpse_error_blameDev(void);
 
-void rpse_error_checkDLLNodePtrMalloc(dll_node_t **p_target_node);
-void rpse_error_checkDLLNodeMalloc(dll_node_t *target_node);
+void rpse_error_checkDLLNodePtrMalloc(string_dll_node_t **p_target_node);
+void rpse_error_checkDLLNodeMalloc(string_dll_node_t *target_node);
 
 void rpse_error_checkStringMalloc(char *target_string);
 void rpse_error_checkStringArrayMalloc(char **target_str_arr);

@@ -24,6 +24,9 @@
 #include <time.h>
 #include <stdlib.h>
 
+#define PVP 1
+#define EXIT_GAME 2
+
 /*
 ================
 STATIC FUNCTIONS
@@ -51,6 +54,11 @@ _rpse_main_licenseStatement(void)
 static unsigned short int
 _rpse_main_mainMenu(user_input_data_t *input_data)
 {
+	if (input_data == NULL)
+		{
+		perror("\"input_data == NULL\" while attempting to display main menu");
+		exit(EXIT_FAILURE);
+		}
     printf("<----- Main menu ----->\n"
             "1. Player vs Player (PvP - WIP).\n"
             "2. Player vs Bot (PvE).\n\n");
@@ -59,7 +67,12 @@ _rpse_main_mainMenu(user_input_data_t *input_data)
     input_data->interval [1] = 2;
     input_data->buffer_size = 2;
     
-    rpse_io_int(input_data, false, "Select a gamemode by it's number: ");
+    if (rpse_io_int(input_data, false, "Select a gamemode by it's number: ") == EXIT_FAILURE)
+		{
+		perror("Failure while attempting to get int input");
+		rpse_error_errorMessage("attempt at getting int input");
+		exit(EXIT_FAILURE);
+		}
 
     return input_data->input.int_input;
 }
@@ -90,7 +103,7 @@ main(void)
 		{
 		selected_gamemode = _rpse_main_mainMenu(input_data);
 		}
-	while ((selected_gamemode == 1) ? rpse_gamemode1_pvp(input_data) : rpse_gamemode2_pve(input_data) != 2);
+	while ((selected_gamemode == PVP) ? rpse_gamemode1_pvp(input_data) : rpse_gamemode2_pve(input_data) != EXIT_GAME);
 
 	return 0;
 }

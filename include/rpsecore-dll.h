@@ -18,20 +18,20 @@
 #ifndef RPSECORE_DLL_H
 #define RPSECORE_DLL_H
 
-struct dll
+struct string_dll
 {
-    struct dll *prev;
+    struct string_dll *prev;
     char *data;
-    struct dll *next;
+    struct string_dll *next;
 };
 
-typedef struct dll dll_node_t;
+typedef struct string_dll string_dll_node_t;
 
-dll_node_t* rpse_dll_createDLL(const char *DATA);
-void rpse_dll_insertAtDLLEnd(dll_node_t **head, const char *DATA);
-void rpse_dll_deleteAtDLLPostion(dll_node_t **head, const unsigned int DELETION_POSITION);
-void rpse_dll_deleteDLL(dll_node_t **head);
-void rpse_dll_deleteDLLDuplicateNodes(dll_node_t **head);
-unsigned int rpse_dll_getNodeCount(dll_node_t **head);
+int rpse_dll_getStringDLLNodeCount(string_dll_node_t **head);
+string_dll_node_t* rpse_dll_createStringDLL(const char *DATA);
+unsigned short int rpse_dll_insertAtStringDLLEnd(string_dll_node_t **head, const char *DATA);
+unsigned short int rpse_dll_deleteAtDLLStringPosition(string_dll_node_t **head, const unsigned int DELETION_POSITION);
+unsigned short int rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head);
+unsigned short int rpse_dll_deleteStringDLL(string_dll_node_t **head);
 
 #endif

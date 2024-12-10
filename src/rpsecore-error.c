@@ -20,6 +20,7 @@
 #include "../include/rpsecore-moveDef.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /*
@@ -31,20 +32,22 @@ MESSAGE FUNCTION
 void 
 rpse_error_errorMessage(const char* ACTION)
 {
-    fprintf(stderr, "\n/////////////////////////////////////////////\n"
-                    "Error detected during %s.\n"
-                    "/////////////////////////////////////////////\n"
-                    "Possible plans of action, in order:\n"
+    const unsigned int DECORATOR_LEN = strlen(ACTION) + strlen("Error detected during .");
+    for (unsigned int char_index = 0; char_index < DECORATOR_LEN; char_index++)
+        fprintf(stderr, "/");
+    fprintf(stderr, "\nError detected while %s.\n", ACTION);
+    for (unsigned int char_index = 0; char_index < DECORATOR_LEN; char_index++)
+        fprintf(stderr, "/");
+    fprintf(stderr, "\nPossible plans of action, in order:\n"
                     "\t1. Reload RPSe.\n"
                     "\t2. Restart your system and reload RPSe.\n"
-                    "\t3. Notify an RPSe developer.\n", ACTION);
+                    "\t3. Notify an RPSe developer.\n");
 }
 
 void
 rpse_error_blameDev(void)
 {
-    fprintf(stderr, "Error detected, please blame the developer who has made some dumb mistake!\n");
-    exit(1);
+    perror("[WARNING] The dev was a bit stupid, dw about it. You'll get a segmentation fault soon... I mean it");
 }
 
 /*
@@ -54,21 +57,21 @@ DOUBLY-LINKED LIST FUNCTIONS
 */
 
 void
-rpse_error_checkDLLNodePtrMalloc(dll_node_t **p_target_node)
+rpse_error_checkDLLNodePtrMalloc(string_dll_node_t **p_target_node)
 {
     if (*p_target_node == NULL)
         {
-        rpse_error_errorMessage("allocation of a dll_node_t**");
+        rpse_error_errorMessage("allocation of a string_dll_node_t**");
         exit(1);
         }
 }
 
 void
-rpse_error_checkDLLNodeMalloc(dll_node_t *target_node)
+rpse_error_checkDLLNodeMalloc(string_dll_node_t *target_node)
 {
     if (target_node == NULL)
         {
-        rpse_error_errorMessage("allocation of a dll_node_t*");
+        rpse_error_errorMessage("allocation of a string_dll_node_t*");
         exit(1);
         }
 }

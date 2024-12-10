@@ -19,6 +19,7 @@
 #include "../include/rpsecore-io.h"
 #include "../include/rpsecore-broadcast.h"
 #include "../include/rpsecore-dll.h"
+#include "../include/rpsecore-error.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -41,17 +42,25 @@ _rpse_gamemode1_usernameMenu(user_input_data_t *input_data, const unsigned short
     do
         {
         printf("Insert a username for your player: ");
-        
-        rpse_io_str(input_data, false);
 
-        dll_node_t *head = rpse_broadcast_receiveBroadcast();
-        rpse_dll_deleteDLLDuplicateNodes(&head);
-        exact_match_found = rpse_broadcast_verifyDLLStructure(&head, P2P_TYPE, input_data->input.str_input);
+        input_data->buffer_size = 31;
+        
+        if (rpse_io_str(input_data, false) == EXIT_FAILURE)
+            {
+            perror("\"input_data->input.str_input == NULL\" while attempting to get stirng input");
+            rpse_error_errorMessage("attempting to get string input");
+            exit(EXIT_FAILURE);
+            }
+
+        string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
+        rpse_dll_deleteStringDLLDuplicateNodes(&head);
+        exact_match_found = rpse_broadcast_verifyAndTrimDLLStructure(&head, P2P_TYPE, input_data->input.str_input);
 
         if (exact_match_found)
             printf("This username has already been taken, please try again.\n");
         
-        rpse_dll_deleteDLL(&head);
+        if (head != NULL)
+            rpse_dll_deleteStringDLL(&head);
     }
     while (exact_match_found);
 
@@ -69,7 +78,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     printf("This gamemode is still a work in progress, please try again in a future update.\n");
     sleep(1);
 
-    printf("Here is a sneek peak:\n\n");
+    printf("Here is a sneak peak:\n\n");
     sleep(1);
     _rpse_gamemode1_usernameMenu(input_data, 1);
     /* BROADCAST USERNAME AFTER SUCCESSFUL MENU EXIT */

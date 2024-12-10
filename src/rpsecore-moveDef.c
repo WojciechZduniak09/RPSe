@@ -58,29 +58,49 @@ _rpse_moveDef_customMoveExplanation(void)
 	sleep(0.2);
 }
 
-static void
+static unsigned short int
 rpse_moveDef_static_makeCustomMoveRelations(user_input_data_t *input_data, move_data_t *move_data)
 {
+	if (input_data == NULL)
+		{
+		perror("\"input_data == NULL\" while attempting to create custom move relations");
+		return EXIT_FAILURE;
+		}
+
+	else if (move_data == NULL)
+		{
+		perror("\"move_data == NULL\" while attempting to create custom move relations");
+		return EXIT_FAILURE;
+		}
+	
 	unsigned short int array_index;
 
-	for (unsigned short int move_index = 0; move_index < 3; move_index++)
+	for (unsigned short int move_array_index = 0; move_array_index < 3; move_array_index++)
 		{
-		printf("[%u/4] Can %s beat %s? (y/n)\n", move_index + 2, move_data->move_names[3],
-			   move_data->move_names[move_index]);
-		rpse_io_yn(input_data, true);
+		printf("[%u/4] Can %s beat %s? (y/n)\n", move_array_index + 2, move_data->move_names[3],
+			   move_data->move_names[move_array_index]);
+		
+		if (rpse_io_yn(input_data, true) == EXIT_FAILURE)
+			{
+			perror("Failure while attempting to get y/n input");
+			return EXIT_FAILURE;
+			}
 
-		array_index = move_index;
+		array_index = move_array_index;
 		if (input_data->input.char_input == 'y')
 			{
 			move_data->winning_combinations[array_index + 3][0] = 3;
-			move_data->winning_combinations[array_index + 3][1] = move_index;
+			move_data->winning_combinations[array_index + 3][1] = move_array_index;
 			}
+
 		else
 			{
-			move_data->winning_combinations[array_index + 3][0] = move_index;
+			move_data->winning_combinations[array_index + 3][0] = move_array_index;
 			move_data->winning_combinations[array_index + 3][1] = 3;
 			}
-	}
+		}
+
+	return EXIT_SUCCESS;
 }
 
 /*
@@ -89,47 +109,88 @@ MOVE-DEFINING FUNCTIONS
 =======================
 */
 
+/* Returns NULL for errors */
 move_data_t *
 rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 {
+	if (input_data == NULL)
+		{
+		perror("\"input_data == NULL\" while attempting to set up moves");
+		return NULL;
+		}
+
 	_rpse_moveDef_customMoveExplanation();
 	
-	move_data_t *new_move_data = malloc(sizeof(move_data_t));
-	rpse_error_checkMoveDataMalloc(new_move_data);
+	move_data_t *new_move_data = calloc(1, sizeof(move_data_t *));
 
-	new_move_data->move_names = malloc(sizeof(char *) * 4);
-	rpse_error_checkStringArrayMalloc(new_move_data->move_names);
+	for (unsigned short int attempt = 1; attempt <= 3 && new_move_data == NULL; attempt++)
+		new_move_data = calloc(1, sizeof(move_data_t *));
+	
+	if (new_move_data == NULL)
+		{
+		perror("\"new_move_data == NULL\" while attempting to calloc() memory for move data");
+		return NULL;
+		}
+
+	new_move_data->move_names = NULL;
+	
+	for (unsigned short int attempt = 1; attempt <= 3 && new_move_data->move_names == NULL; attempt++)
+		new_move_data->move_names = calloc(4, sizeof(char *));
+
+	if (new_move_data->move_names == NULL)
+		{
+		perror("\"new_move_data->move_names == NULL\" while attempting to calloc() memory for move data names");
+		return NULL;
+		}
 
 	const char STD_MOVE_NAMES[3][9] = {"rock", "paper", "scissors"};
 
-	for (unsigned short int move_index = 0; move_index < 3; move_index++)
+	for (unsigned short int move_arr_index = 0; move_arr_index < 3; move_arr_index++)
 		{
-		new_move_data->move_names[move_index] = malloc(strlen(STD_MOVE_NAMES[move_index]) + 1);
-		rpse_error_checkStringMalloc(new_move_data->move_names[move_index]);
+		for (unsigned short int attempt = 1; attempt <= 3 && new_move_data->move_names[move_arr_index] == NULL; attempt++)
+			new_move_data->move_names[move_arr_index] = calloc(strlen(STD_MOVE_NAMES[move_arr_index]) + 1, sizeof(char));
 
-		strcpy(new_move_data->move_names[move_index], STD_MOVE_NAMES[move_index]);
+		if (new_move_data->move_names[move_arr_index] == NULL)
+			{
+			perror("\"new_move_data->move_names[move_arr_index] == NULL\" while attempting to calloc() memory for move data name");
+			return NULL;
+			}
+
+		strncpy(new_move_data->move_names[move_arr_index], STD_MOVE_NAMES[move_arr_index], strlen(STD_MOVE_NAMES[move_arr_index]) + 1);
 		}
 
 	const unsigned short int STD_MOVE_COMBINATIONS[3][2] = {{0, 2}, {1, 0}, {2, 1}};
 
-	for (unsigned short int array_index = 0; array_index < 3; array_index++)
+	for (unsigned short int move_array_index = 0; move_array_index < 3; move_array_index++)
 		{
-		for (unsigned short int element_index = 0; element_index < 2; element_index++)
-			{
-			new_move_data->winning_combinations[array_index][element_index] =
-				STD_MOVE_COMBINATIONS[array_index][element_index];
-			}
+		for (unsigned short int move_index = 0; move_index < 2; move_index++)
+			new_move_data->winning_combinations[move_array_index][move_index] = STD_MOVE_COMBINATIONS[move_array_index][move_index];
 		}
 	
+	/* Setting up custom move */
 	printf("[1/4] What should your custom move be named? (30 character limit)\n");
-	input_data->buffer_size = 31;
-	rpse_io_str(input_data, true);
+	input_data->buffer_size = 30;
+
+	if (rpse_io_str(input_data, true) == EXIT_FAILURE)
+		{
+		perror("Failure while attempting to get string input");
+		return NULL;
+		}
+
 	unsigned short int name_size = strlen(input_data->input.str_input) + 1;
 
-	new_move_data->move_names[3] = malloc(name_size);
-	rpse_error_checkStringMalloc(new_move_data->move_names[3]);
+	for (unsigned short int attempt = 1; attempt <= 3 && new_move_data->move_names[3] == NULL; attempt++)
+		new_move_data->move_names[3] = calloc(name_size, sizeof(char));
 
-	strcpy(new_move_data->move_names[3], input_data->input.str_input);
+	if (new_move_data->move_names[3] == NULL)
+		{
+		perror("\"new_move_data->move_names[3] == NULL\" while attempting to calloc() memory for move data name");
+		return NULL;
+		}
+
+	strncpy(new_move_data->move_names[3], input_data->input.str_input, name_size);
+
+	memset(input_data->input.str_input, 0, name_size);
 	free(input_data->input.str_input);
 	input_data->input.str_input = NULL;
 	
@@ -140,23 +201,47 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 	return new_move_data;
 }
 
-void
-rpse_moveDef_redoMoves(user_input_data_t *input_data, move_data_t *move_data)
+unsigned short int
+rpse_moveDef_redoCustomMove(user_input_data_t *input_data, move_data_t *move_data)
 {
+	if (input_data == NULL)
+		{
+		perror(" \"input_data == NULL\" while attempting to redo custom move data");
+		return EXIT_FAILURE;
+		}
+	else if (move_data == NULL)
+		{
+		perror("\"move_data == NULL\" while attempting to redo custom move data");
+		return EXIT_FAILURE;
+		}
+	
 	printf("What should %s be renamed to? (30 character limit)\n", move_data->move_names[3]);
 	
 	input_data->buffer_size = 31;
-	rpse_io_str(input_data, true);
+	if (rpse_io_str(input_data, true) == EXIT_FAILURE)
+		{
+		perror("Failure while attempting to get string input");
+		return EXIT_FAILURE;
+		}
+	
 	unsigned short int new_name_size = strlen(input_data->input.str_input) + 1;
 
-	move_data->move_names[3] = realloc(move_data->move_names[3], new_name_size);
-	rpse_error_checkStringMalloc(move_data->move_names[3]);
+	for (unsigned short int attempt = 1; attempt <= 3 && move_data->move_names[3] == NULL; attempt++)
+		move_data->move_names[3] = realloc(move_data->move_names[3], new_name_size);
+		
+	if (move_data->move_names[3] == NULL)
+		{
+		perror("\"move_data_>move_names[3] == NULL\" while attempting to realloc() custom move data");
+		return EXIT_FAILURE;
+		}
 
-	strcpy(move_data->move_names[3], input_data->input.str_input);
+	strncpy(move_data->move_names[3], input_data->input.str_input, (size_t)new_name_size);
 	free(input_data->input.str_input);
 	input_data->input.str_input = NULL;
 
 	rpse_moveDef_static_makeCustomMoveRelations(input_data, move_data);
+
+	return EXIT_SUCCESS;
 }
 
 /*
@@ -165,11 +250,25 @@ CLEANUP FUNCTION
 ================
 */
 
-void
+/* Keep all strings in array defined before using */
+unsigned short int
 rpse_moveDef_freeMoveData(move_data_t *move_data)
 {
+	if (move_data == NULL)
+		{
+		perror("\"move_data == NULL\" while attempting to free move data array");
+		return EXIT_FAILURE;
+		}
+	
     for (unsigned short int array_index = 0; array_index < 4; array_index++)
 		{
+		if (move_data->move_names[array_index] == NULL)
+			{
+			perror("Unexpected value NULL found in move_data->move_names[array_index] while trying to free. " 
+				   "Has it already been free'd?");
+			return EXIT_FAILURE;
+			}
+		
         free(move_data->move_names[array_index]);
         move_data->move_names[array_index] = NULL;
     	}
@@ -179,4 +278,6 @@ rpse_moveDef_freeMoveData(move_data_t *move_data)
     
     free(move_data);
     move_data = NULL;
+
+	return EXIT_SUCCESS;
 }

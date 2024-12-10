@@ -34,8 +34,8 @@ typedef struct
 
 unsigned short int rpse_io_enterToContinue(void);
 void * rpse_io_threadedEnterToContinue(void *arg);
-void rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
-void rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
+unsigned short int rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input);
+unsigned short int rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt);
+unsigned short int rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input);
 
 #endif

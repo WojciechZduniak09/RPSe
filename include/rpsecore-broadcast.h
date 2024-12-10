@@ -59,8 +59,8 @@ typedef struct
     char* message[118]; /* 118 is the maximum, not constant value */
 } broadcast_data_t;
 
-bool rpse_broadcast_verifyDLLStructure(dll_node_t **head, const unsigned short int P2P_TYPE, char *username);
-dll_node_t * rpse_broadcast_receiveBroadcast(void);
+unsigned short int rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int P2P_TYPE, const char *USERNAME);
+string_dll_node_t * rpse_broadcast_receiveBroadcast(void);
 void * rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA);
 void * rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE);
 

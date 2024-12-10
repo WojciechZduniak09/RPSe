@@ -20,11 +20,15 @@
 #include "../include/rpsecore-sharedGamemodeMenus.h"
 #include "../include/rpsecore-roundCalc.h"
 #include "../include/rpsecore-moveDef.h"
+#include "../include/rpsecore-error.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
+
+#define RETURN_TO_MAIN_MENU 1
+#define EXIT_GAME 2
 
 /*
 ============
@@ -71,7 +75,17 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
         input_data->interval[1] = 4;
         input_data->buffer_size = 2;
         
-        rpse_io_int(input_data, false, "Select a move by it's number: ");
+        if (rpse_io_int(input_data, false, "Select a move by it's number: ") == EXIT_FAILURE)
+            {
+            perror("Failure while attempting to get int input");
+            rpse_error_errorMessage("attempt at getting int input");
+
+            if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
+                abort();
+            else
+                exit(EXIT_FAILURE);
+            }
+        
         printf("\n");
         round_info.p1_move = --input_data->input.int_input;
         
@@ -90,7 +104,16 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
         
         printf("\n\n<--- DONE --->\n\n");
 
-        rpse_roundCalc_getWinner(&round_info, move_data);
+        if (rpse_roundCalc_getWinner(&round_info, move_data) == EXIT_FAILURE)
+            {
+            perror("Failure while attempting to calulate round winner");
+            rpse_error_errorMessage("attempt at calculating round winner");
+
+            if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
+                abort();
+            else
+                exit(EXIT_FAILURE);
+            }
 
         player_data_t player_data =
         (player_data_t)
@@ -108,19 +131,45 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
             {
             switch (rpse_sharedGamemodeMenus_endOfGameMenu(input_data, true))
                 {
+                case -1:
+                    perror("Failure while attempting to display end of game menu");
+                    rpse_error_errorMessage("attempt at displaying end of game menu");
+
+                    if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
+                        abort();
+                    else
+                        exit(EXIT_FAILURE);
+                
                 case 1:
                     rpse_roundCalc_prepNewMatch(&round_info);
                     break;
 
                 case 2:
                     rpse_roundCalc_prepNewMatch(&round_info);
-                    rpse_moveDef_redoMoves(input_data, move_data);
+                    
+                    if (rpse_moveDef_redoCustomMove(input_data, move_data) == EXIT_FAILURE)
+                        {
+                        perror("Failure while attempting to redo custom move data");
+                        rpse_error_errorMessage("attempt at redoing custom move data");
+
+                        if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
+                            abort();
+                        else
+                            exit(EXIT_FAILURE);
+                        }
+                    
                     rpse_sharedGamemodeMenus_roundStartCountdown();
                     break;
 
                 case 3:
-                    rpse_moveDef_freeMoveData(move_data);
-                    return 0;
+                    if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
+                        {
+                        perror("Failure while attempting to free move data");
+                        rpse_error_errorMessage("attempt at freeing move data");
+                        abort();
+                        }
+                    else
+                        return RETURN_TO_MAIN_MENU;
 
                 case 4:
                     round_info.replay = false;
@@ -129,7 +178,12 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
             }
         }
 
-    rpse_moveDef_freeMoveData(move_data);
-
-    return 2;
+    if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
+        {
+        perror("Failure while attempting to free move data");
+        rpse_error_errorMessage("attempt at freeing move data");
+        exit(EXIT_FAILURE);
+        }
+    
+    return EXIT_GAME;
 }

@@ -27,7 +27,7 @@ typedef struct
 } move_data_t;
 
 move_data_t* rpse_moveDef_setUpMoves(user_input_data_t *input_data);
-void rpse_moveDef_redoMoves(user_input_data_t *input_data, move_data_t *move_data);
-void rpse_moveDef_freeMoveData(move_data_t *move_data);
+unsigned short int rpse_moveDef_redoCustomMove(user_input_data_t *input_data, move_data_t *move_data);
+unsigned short int rpse_moveDef_freeMoveData(move_data_t *move_data);
 
 #endif

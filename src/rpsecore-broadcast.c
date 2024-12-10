@@ -57,9 +57,9 @@ Fast explanation
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
 #define BROADCAST_INTERVAL 10 /* seconds */
-#define P2P1_REGEX_CONSTANT "@RPSe\\.P2P1\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)\\/"
+#define P2P1_REGEX_CONSTANT "@RPSe\\.P2P1\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
 #define P2P2_REGEX_CONSTANT "@RPSe\\.P2P2\\/invitesOn\\(0-9\\.){7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
-                      "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
+                            "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
 
 /*
@@ -147,6 +147,8 @@ _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
         return;
 }
 
+/* Go down to around line 254 for the receiver */
+
 static void 
 _rpse_broadcast_doublePublishBroadcast(const broadcast_data_t *BROADCAST_DATA)
 {
@@ -188,18 +190,43 @@ BROADCAST VERIFIER
 View header file for P2P types
 */
 
-bool
-rpse_broadcast_verifyDLLStructure(dll_node_t **head, const unsigned short int P2P_TYPE, char *username)
+unsigned short int
+rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int P2P_TYPE, const char *USERNAME)
 {
+    if (head == NULL)
+        {
+        perror("\"head == NULL\" while attempting to verify nodes in a string DLL");
+		rpse_error_blameDev();
+        return EXIT_FAILURE;
+        }
+
+    if ((*head) == NULL)
+        {
+        perror("\"(*head) == NULL\" while attempting to verify nodes in a string DLL");
+		rpse_error_blameDev();
+        return EXIT_FAILURE;
+        }
+
     regex_t compiled_regex;
-    char *expected_pattern = calloc(strlen(P2P2_REGEX_CONSTANT) + 1, sizeof(char));
+
+    char *expected_pattern = NULL;
+    for (unsigned short int attempt = 0; attempt < 3 && expected_pattern == NULL; attempt++)
+        expected_pattern = calloc(strlen(P2P2_REGEX_CONSTANT) + 1, sizeof(char));
+    
+    if (expected_pattern == NULL)
+        {
+        perror("\"expected_pattern == NULL\" while attempting to calloc() memory for it.");
+        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        return EXIT_FAILURE;
+        }
+
     strncpy(expected_pattern, "", strlen("") + 1);
     int ret_val;
 
-    if (username == NULL)
+    if (USERNAME == NULL)
         strncat(expected_pattern, "^[a-zA-Z0-9]{1,30}", strlen("^[a-zA-Z0-9]{1,30}") + 1);
     else
-        strncat(expected_pattern, username, strlen(username) + 1);
+        strncat(expected_pattern, USERNAME, strlen(USERNAME) + 1);
     
     switch (P2P_TYPE)
         {
@@ -213,32 +240,53 @@ rpse_broadcast_verifyDLLStructure(dll_node_t **head, const unsigned short int P2
 
     ret_val = regcomp(&compiled_regex, expected_pattern, 0);
 
-    if (ret_val != 0)
-        rpse_error_blameDev();
-    
-    dll_node_t *tmp = *head;
-
-    bool dll_data_structure_is_valid = false;
-    const unsigned int TOTAL_NODES = rpse_dll_getNodeCount(head);
-
-    for (unsigned int position = 1; position < TOTAL_NODES && tmp->next != NULL; position++)
+    if (ret_val != EXIT_SUCCESS) 
         {
-        ret_val = regexec(&compiled_regex, tmp->data, 0, NULL, 0);
-
-        if (ret_val != 0)
-            rpse_dll_deleteAtDLLPostion(head, position);
-            
-        else
-            dll_data_structure_is_valid = true;
+        rpse_error_blameDev();
+        return EXIT_FAILURE;
         }
-    
-    free(tmp);
-    tmp = NULL;
+
+    string_dll_node_t *tmp_next;
+    string_dll_node_t *tmp_current_node = (*head);
+
+    const unsigned int TOTAL_INITIAL_NODES = rpse_dll_getStringDLLNodeCount(&tmp_current_node);
+
+    for (
+        unsigned int position = 1;
+        position < TOTAL_INITIAL_NODES && tmp_current_node != NULL;
+        position++
+        )
+        {
+        if (tmp_current_node->next == NULL)
+            tmp_next = NULL;
+        else
+            tmp_next = tmp_current_node->next;
+        
+        ret_val = regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0);
+        if (ret_val != EXIT_SUCCESS)
+            {
+            if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
+                {
+                perror("Error while attempting to delete a string DLL node");
+                rpse_error_errorMessage("attempting to delete a string DLL node");
+                return EXIT_FAILURE;
+                }
+            position--; /* We are now technically at the same node number */
+            }
+
+        if (tmp_next == NULL)
+                tmp_current_node = NULL;
+        else
+            tmp_current_node = tmp_next;   
+        }
+
+    tmp_next = NULL;
+    tmp_current_node = NULL;
 
     free(expected_pattern);
     expected_pattern = NULL;
 
-    return dll_data_structure_is_valid;
+    return EXIT_SUCCESS;
 }
 
 /*
@@ -249,7 +297,7 @@ RECEIVER FUNCTION
 The broadcast function isn't in this section as it is not needed outside of this file 
 */
 
-dll_node_t *
+string_dll_node_t *
 rpse_broadcast_receiveBroadcast(void)
 {
     struct sockaddr_in broadcaster_addr;
@@ -279,7 +327,7 @@ rpse_broadcast_receiveBroadcast(void)
     ret_val = bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr));
     rpse_error_checkSocketOpRetVal(ret_val, &sockfd);
 
-    dll_node_t* head = rpse_dll_createDLL("");
+    string_dll_node_t* head = rpse_dll_createStringDLL("");
     time_t start = time(NULL);
 
     char *buffer = calloc(RECEIVER_BUFFER_SIZE, sizeof(char) );
@@ -309,7 +357,7 @@ rpse_broadcast_receiveBroadcast(void)
         if (head->data == NULL)
             head->data = buffer;
         else
-            rpse_dll_insertAtDLLEnd(&head, buffer);
+            rpse_dll_insertAtStringDLLEnd(&head, buffer);
 
         memset(buffer, 0, RECEIVER_BUFFER_SIZE);
         memset(initial_buffer_val, 0, RECEIVER_BUFFER_SIZE);
@@ -356,12 +404,12 @@ rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE)
         {
         _rpse_broadcast_waitUntilInterval();
 
-        dll_node_t *head = rpse_broadcast_receiveBroadcast();
+        string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
 
-        rpse_dll_deleteDLLDuplicateNodes(&head);
-        rpse_broadcast_verifyDLLStructure(&head, P2P_TYPE, NULL);
+        rpse_dll_deleteStringDLLDuplicateNodes(&head);
+        rpse_broadcast_verifyAndTrimDLLStructure(&head, P2P_TYPE, NULL);
 
-        rpse_dll_deleteDLL(&head);
+        rpse_dll_deleteStringDLL(&head);
 
         /* ADD MENU HERE */
         }

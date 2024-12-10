@@ -31,6 +31,7 @@ bool enter_to_continue_first_call = true;
 STATIC FUNCTIONS
 ================
 */
+
 static void
 _rpse_io_static_tabBeforeInput(bool insertTabBeforeInput)
 {
@@ -56,7 +57,7 @@ rpse_io_enterToContinue(void)
 	getchar();	
 	printf("\n");
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 /* No arguments truly needed */
@@ -76,13 +77,33 @@ rpse_io_threadedEnterToContinue(void *arg)
 	return NULL;
 }
 
-void
+/* String must be freed by caller */
+unsigned short int
 rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 {
+	if (input_data == NULL)
+		{
+		perror("\"input_data == NULL\" while attempting to display string input prompt");
+		return EXIT_FAILURE;
+		}
+	
 	_rpse_io_static_tabBeforeInput(insert_tab_before_input);
+	
+	input_data->input.str_input = NULL;
 
-	input_data->input.str_input = malloc(input_data->buffer_size);
-	rpse_error_checkStringMalloc(input_data->input.str_input);
+	for (unsigned short int attempt = 1; attempt <= 3 && input_data->input.str_input == NULL; attempt++)
+			{
+			if (input_data->input.str_input == NULL)
+				input_data->input.str_input = calloc(input_data->buffer_size, sizeof(char));
+			else
+			input_data->input.str_input = realloc(input_data->input.str_input, strlen(input_data->input.str_input) + 1);
+			}
+
+	if (input_data->input.str_input == NULL)
+		{
+		perror("\"input_data->input.str_input == NULL\" while attempting to calloc() memory for buffer");
+		return EXIT_FAILURE;
+		}
 
 	getchar();
 
@@ -90,22 +111,38 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 
 	input_data->input.str_input[strcspn(input_data->input.str_input, "\n")] = 0;
 
-	input_data->input.str_input = realloc(input_data->input.str_input, strlen(input_data->input.str_input) + 1);
-	rpse_error_checkStringMalloc(input_data->input.str_input);
+	for (unsigned short int attempt = 1; attempt <= 3 && input_data->input.str_input == NULL; attempt++)
+		input_data->input.str_input = realloc(input_data->input.str_input, strlen(input_data->input.str_input) + 1);
+	
+	if (input_data->input.str_input == NULL)
+		{
+		perror("\"input_data->input.str_input == NULL\" while attempting to realloc() memory for efficiency");
+		return EXIT_FAILURE;
+		}
+	else
+		return EXIT_SUCCESS;
 }
 
-void
+unsigned short int
 rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *prompt)
 {
-	if (input_data->interval[0] > input_data->interval[1])
+	if (input_data == NULL)
+		{
+		perror("\"input_data == NULL\" while attempting to display integer input prompt");
+		return EXIT_FAILURE;
+		}
+	
+	else if (input_data->interval[0] > input_data->interval[1])
+		{
 		rpse_error_blameDev();
+		return EXIT_FAILURE;
+		}
 	
 	printf("%s", prompt);
 	_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 	scanf(" %d", &input_data->input.int_input);
 
-	while (input_data->input.int_input < input_data->interval[0] ||
-		   input_data->input.int_input > input_data->interval[1])
+	while (input_data->input.int_input < input_data->interval[0] || input_data->input.int_input > input_data->interval[1])
 		{
 		getchar();
 				
@@ -117,6 +154,8 @@ rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *p
 		printf("%s", prompt);
 		scanf(" %d", &input_data->input.int_input);
 		}
+
+	return EXIT_SUCCESS;
 }
 
 
@@ -149,9 +188,15 @@ void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, ch
 */
 
 
-void
+unsigned short int
 rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input)
 {
+	if (input_data == NULL)
+		{
+		perror("\"input_data == NULL\" while attempting to display y/n prompt");
+		return EXIT_FAILURE;
+		}
+	
 	_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 	
 	input_data->input.char_input = tolower(getchar());
@@ -166,4 +211,6 @@ rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input)
 		}
 		
 	getchar();
+
+	return EXIT_SUCCESS;
 }

@@ -39,9 +39,9 @@ typedef struct
     bool player_2_ready;
 } player_data_t;
 
-void rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, \
-                                           player_data_t *player_data, const unsigned short int PLAYER_NUMBER);
-unsigned short int rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool isForPvE);
+unsigned short int rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, \
+                                                         player_data_t *player_data, const unsigned short int PLAYER_NUMBER);
+short int rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool isForPvE);
 
 void rpse_sharedGamemodeMenus_roundStartCountdown(void);
 

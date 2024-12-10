@@ -58,13 +58,28 @@ For move-defining menus, refer to rpsecore-moveDef.c
 */
 
 /* View rpsecore-sharedGamemodeMenus.h for player numbers */
-void
+unsigned short int
 rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *move_data, player_data_t *player_data,
                                       const unsigned short int PLAYER_NUMBER)
 {
+    if (round_info == NULL)
+        {
+        perror("\"round_info == NULL\" while attempting to display round summary");
+        return EXIT_FAILURE;
+        }
+    else if (move_data == NULL)
+        {
+        perror("\"move_data == NULL\" while attempting to display round summary");
+        return EXIT_FAILURE;
+        }
+    else if (player_data == NULL)
+        {
+        perror("\"player_data == NULL\" while attempting to display round summary");
+        return EXIT_FAILURE;
+        }
+    
 	if (strncmp(round_info->winner, "p1", 3) == 0)
         strcpy(round_info->winner, player_data->PLAYER_1_NAME);
-
 
     /* I know that this format is ugly but it shushes the compiler */
     else if (strncmp(round_info->winner, "p2", 3) == 0)
@@ -121,13 +136,22 @@ rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *mov
         player_data->player_1_ready = true;
     else
         player_data->player_2_ready = true;
+
+    return EXIT_SUCCESS;
 }
 
-unsigned short int
+/* Retruns -1 for failures */
+short int
 rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_for_pve)
 {
+    if (input_data == NULL)
+        {
+        perror("\"input_data == NULL\" while attempting to display end of game menu");
+        return -1;
+        }
+    
 	const char PVE_MENU_OPTIONS[4][28] = {"Replay", "Edit custom move & replay", 
-                                      "Return to main menu", "Exit RPSe"};
+                                          "Return to main menu", "Exit RPSe"};
     const char PVP_MENU_OPTIONS[4][21] = {"Replay", "Return to PvP menu", "Return to main menu", 
                                           "Exit RPSe"};
     
@@ -144,8 +168,6 @@ rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_fo
 	
     input_data->interval[0] = 1;
 	input_data->interval[1] = 4;
-
-	
 
     if (is_for_pve)
         rpse_io_int(input_data, false, "Choose an option by it's number: ");

@@ -32,7 +32,7 @@ typedef struct
 	bool replay;
 } round_info_t;
 
-void rpse_roundCalc_getWinner(round_info_t *round_info, move_data_t *move_data);
-void rpse_roundCalc_prepNewMatch(round_info_t *round_info);
+unsigned short int rpse_roundCalc_getWinner(round_info_t *round_info, move_data_t *move_data);
+unsigned short int rpse_roundCalc_prepNewMatch(round_info_t *round_info);
 
 #endif
