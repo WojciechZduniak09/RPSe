@@ -23,11 +23,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/*
-================
-MESSAGE FUNCTION
-================
-*/
 
 void 
 rpse_error_errorMessage(const char* ACTION)
@@ -44,154 +39,9 @@ rpse_error_errorMessage(const char* ACTION)
                     "\t3. Notify an RPSe developer.\n");
 }
 
+
 void
 rpse_error_blameDev(void)
 {
     perror("[WARNING] The dev was a bit stupid, dw about it. You'll get a segmentation fault soon... I mean it");
-}
-
-/*
-============================
-DOUBLY-LINKED LIST FUNCTIONS
-============================
-*/
-
-void
-rpse_error_checkDLLNodePtrMalloc(string_dll_node_t **p_target_node)
-{
-    if (*p_target_node == NULL)
-        {
-        rpse_error_errorMessage("allocation of a string_dll_node_t**");
-        exit(1);
-        }
-}
-
-void
-rpse_error_checkDLLNodeMalloc(string_dll_node_t *target_node)
-{
-    if (target_node == NULL)
-        {
-        rpse_error_errorMessage("allocation of a string_dll_node_t*");
-        exit(1);
-        }
-}
-
-/*
-================
-STRING FUNCTIONS
-================
-*/
-
-void
-rpse_error_checkStringMalloc(char *target_string)
-{
-    if (target_string == NULL)
-        {
-        rpse_error_errorMessage("allocation of a char*");
-        exit(1);
-        }
-}
-
-void
-rpse_error_checkStringArrayMalloc(char **target_str_arr)
-{
-    if (target_str_arr == NULL)
-        {
-        rpse_error_errorMessage("allocation of a char**");
-        exit(1);
-        }
-}
-
-/*
-===================
-MOVE DATA FUNCTIONS
-===================
-*/
-
-void
-rpse_error_checkMoveDataMalloc(move_data_t *target_move_data)
-{
-    if (target_move_data == NULL)
-        {
-        rpse_error_errorMessage("allocation of a move_data_t*");
-        exit(1);
-        }
-}
-
-/*
-================
-SOCKET FUNCTIONS
-================
-*/
-
-void
-rpse_error_checkSocketOpRetVal(const int RET_VAL, int *sockfd)
-{
-    if (RET_VAL < 0)
-        {
-        close(*sockfd);
-        rpse_error_errorMessage("socket operation");
-        exit(1);
-        }
-}
-
-/*
-==================
-THREADED FUNCTIONS
-==================
-*/
-
-void
-rpse_error_checkFirstThreadCreation(const int RET_VAL)
-{
-    if (RET_VAL != 0)
-        {
-        rpse_error_errorMessage("thread creation");
-
-        exit(1);
-        }
-}
-
-/*
-============
-INT FUNCTION
-============
-
-I can't believe that this part is actualy necessary
-*/
-
-void
-rpse_error_checkuShortMalloc(unsigned short int *target_ushort)
-{
-    if (target_ushort == NULL)
-        {
-        rpse_error_errorMessage("allocation of a ushort");
-        exit(1);
-        }
-}
-
-/*
-=======================
-MISCELLANEOUS FUNCTIONS
-=======================
-*/
-
-void
-rpse_error_checkLessThan0RetVal(const int RET_VAL)
-{
-    if (RET_VAL < 0)
-        rpse_error_errorMessage("verification of a value to be less than 0");
-}
-
-/* This function assumes that fopen() was used earlier */
-
-void
-rpse_error_checkFileExistance(FILE *fptr)
-{
-    if (fptr == NULL)
-        {
-        rpse_error_errorMessage("search for a file (does not exist)");
-        fclose(fptr);
-        exit(1);
-        }
 }

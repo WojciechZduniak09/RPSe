@@ -79,11 +79,16 @@ STATIC FUNCTIONS
 */
 
 /* Parameter must be allocated to INET_ADDRSTRLEN */
-static void
+static unsigned short int
 _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
 {
     struct ifaddrs *ifaddr;
-    rpse_error_checkLessThan0RetVal(getifaddrs(&ifaddr));
+    int ret_val = getifaddrs(&ifaddr);
+    if (ret_val < 0)
+        {
+        perror("\"ifaddr < 0\" while attempting to get available ifaddresses");
+        return EXIT_FAILURE;
+        }
 
     struct ifaddrs *ifa;
     bool broadcast_addr_found = false;
@@ -92,7 +97,6 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
         {
         if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
             continue;
-
         
         struct sockaddr_in broadcast_addr;
         broadcast_addr.sin_family = AF_INET;
@@ -111,11 +115,13 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
     if (!broadcast_addr_found)
         {
         rpse_error_errorMessage("broadcast address search");
-        exit(1);
+        return EXIT_FAILURE;
         }
     
     freeifaddrs(ifaddr);
     ifaddr = NULL;
+
+    return EXIT_SUCCESS;
 }
 
 
@@ -149,37 +155,56 @@ _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
 
 /* Go down to around line 254 for the receiver */
 
-static void 
+static unsigned short int
 _rpse_broadcast_doublePublishBroadcast(const broadcast_data_t *BROADCAST_DATA)
 {
     struct sockaddr_in broadcast_addr;
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    rpse_error_checkLessThan0RetVal(sockfd);
+    if (sockfd < 0)
+        {
+        perror("\"sockfd < 0\" after attempting to create it");
+        rpse_error_errorMessage("attempting to create a UDP socket");
+        return EXIT_FAILURE;
+        }
 
     int reuse_addr_option = 1;
     int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_option, sizeof(reuse_addr_option));
-    rpse_error_checkSocketOpRetVal(ret_val, &sockfd);
+    if (ret_val < 0)
+        {
+        perror("\"ret_val < 0\" after attempting to make sockfd reusable");
+        rpse_error_errorMessage("attempting to modify a UDP socket");
+        return EXIT_FAILURE;
+        };
 
     ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST, sizeof(ENABLE_BROADCAST));
-    rpse_error_checkSocketOpRetVal(ret_val, &sockfd);
+    if (ret_val < 0)
+        {
+        perror("\"ret_val < 0\" after attempting to make sockfd broadcastable");
+        rpse_error_errorMessage("attempting to modify a UDP socket");
+        return EXIT_FAILURE;
+        };
 
     memset(&broadcast_addr, 0, sizeof(broadcast_addr));
     broadcast_addr.sin_family = AF_INET;
     broadcast_addr.sin_port = htons(BROADCAST_PORT);
     char *broadcast_address = calloc(1, INET_ADDRSTRLEN);
-    _rpse_broadcast_getBroadcastAddress(broadcast_address);
+    if (_rpse_broadcast_getBroadcastAddress(broadcast_address) == EXIT_FAILURE)
+        {
+        perror("Unable to get broadcast address");
+        return EXIT_FAILURE;
+        }
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
 
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
-        {
         ret_val = sendto(sockfd, BROADCAST_DATA->message, strlen(*(BROADCAST_DATA->message)), 0,
-            (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
-        }
+                         (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
 
     free(broadcast_address);
     broadcast_address = NULL;
+
+    return EXIT_SUCCESS;
 }
 
 /* 
@@ -286,6 +311,8 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
     free(expected_pattern);
     expected_pattern = NULL;
 
+    regfree(&compiled_regex);
+
     return EXIT_SUCCESS;
 }
 
@@ -302,69 +329,127 @@ rpse_broadcast_receiveBroadcast(void)
 {
     struct sockaddr_in broadcaster_addr;
 
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    rpse_error_checkLessThan0RetVal(sockfd);
+    int sockfd = -1;
+    for (unsigned short int attempt = 0; attempt < 3 && sockfd < 0; attempt++)
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+        
+    if (sockfd < 0)
+        {
+        perror("\"sockfd < 0\" after attempting to create it");
+        rpse_error_errorMessage("attempting to create a UDP socket");
+        return NULL;
+        }
 
     int reuse_addr_option = 1;
     int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_option, sizeof(reuse_addr_option));
-    rpse_error_checkSocketOpRetVal(ret_val, &sockfd);
+    if (ret_val < 0)
+        {
+        perror("\"ret_val < 0\" after attempting to make sockfd reusable");
+        rpse_error_errorMessage("attempting to modify a UDP socket");
+        return NULL;
+        };
     
     struct timeval socket_timeout;
     socket_timeout.tv_sec = 2; /* receiver timeout in seconds */
     socket_timeout.tv_usec = 0;
+
     ret_val = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &socket_timeout, sizeof(socket_timeout));
-    rpse_error_checkSocketOpRetVal(ret_val, &sockfd);
+    if (sockfd < 0)
+        {
+        perror("\"ret_val < 0\" after make sockfd timeout");
+        rpse_error_errorMessage("attempting to modify a UDP socket");
+        return NULL;
+        }
 
     memset(&broadcaster_addr, 0, sizeof(broadcaster_addr));
     broadcaster_addr.sin_family = AF_INET;
     broadcaster_addr.sin_port = htons(BROADCAST_PORT);
-    char *broadcast_address = malloc(INET_ADDRSTRLEN);
-    broadcast_address = malloc(INET_ADDRSTRLEN);
+
+    char *broadcast_address = NULL;
+
+    for (unsigned short int attempt = 0; attempt < 3 && broadcast_address == NULL; attempt++)
+        broadcast_address = calloc(INET_ADDRSTRLEN, sizeof(char));
+    
+    if (broadcast_address == NULL)
+        {
+        perror("\"broadcast_address == NULL\" while attempting to calloc() memory fot it");
+        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        return NULL;
+        }
+    
     _rpse_broadcast_getBroadcastAddress(broadcast_address);
     broadcaster_addr.sin_addr.s_addr = inet_addr(broadcast_address);
     socklen_t receiver_sock_len = sizeof(broadcaster_addr);
 
     ret_val = bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr));
-    rpse_error_checkSocketOpRetVal(ret_val, &sockfd);
+    if (ret_val < 0)
+        {
+        perror("Unable to bind UDP socket");
+        return NULL;
+        }
 
     string_dll_node_t* head = rpse_dll_createStringDLL("");
     time_t start = time(NULL);
 
-    char *buffer = calloc(RECEIVER_BUFFER_SIZE, sizeof(char) );
-    rpse_error_checkStringMalloc(buffer);
+    char *current_buffer = NULL;
+    for (unsigned short int attempt = 0; attempt < 3 && current_buffer == NULL; attempt++)
+        current_buffer = calloc(RECEIVER_BUFFER_SIZE, sizeof(char));
 
-    char *initial_buffer_val = calloc(RECEIVER_BUFFER_SIZE, sizeof(char));
-    rpse_error_checkStringMalloc(initial_buffer_val);
+    if (current_buffer == NULL)
+        {
+        perror("\"current_buffer == NULL\" while attempting to calloc() memory fot it");
+        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        return NULL;
+        }
+
+    char *initial_buffer = NULL;
+    for (unsigned short int attempt = 0; attempt < 3 && initial_buffer == NULL; attempt++)
+        initial_buffer = calloc(RECEIVER_BUFFER_SIZE, sizeof(char));
+
+    if (initial_buffer == NULL)
+        {
+        perror("\"initial_buffer_val == NULL\" while attempting to calloc() memory fot it");
+        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        return NULL;
+        }
 
     printf("Searching for players on your network, please wait.\n");
 
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
-        strncpy(initial_buffer_val, buffer, strlen(buffer) + 1);
+        strncpy(initial_buffer, current_buffer, strlen(current_buffer) + 1);
         
-        int received_broadcast_len = recvfrom(sockfd, buffer, RECEIVER_BUFFER_SIZE, 0,
+        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0,
                                               (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
-        if (received_broadcast_len == -1 && strncmp(buffer, initial_buffer_val, RECEIVER_BUFFER_SIZE) != 0)
+        if (received_broadcast_len == -1 && strncmp(current_buffer, initial_buffer, RECEIVER_BUFFER_SIZE) != 0)
             {
             rpse_error_errorMessage("recvfrom()");
             close(sockfd);
             exit(1);
             }
         
-        if(strlen(buffer) > 1)
-            buffer[received_broadcast_len] = '\0';
+        if(strlen(current_buffer) > 1)
+            current_buffer[received_broadcast_len] = '\0';
 
         if (head->data == NULL)
-            head->data = buffer;
+            head->data = current_buffer;
         else
-            rpse_dll_insertAtStringDLLEnd(&head, buffer);
+            rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
-        memset(buffer, 0, RECEIVER_BUFFER_SIZE);
-        memset(initial_buffer_val, 0, RECEIVER_BUFFER_SIZE);
+        memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
+        memset(initial_buffer, 0, RECEIVER_BUFFER_SIZE);
         }
 
-    free(buffer);
-    buffer = NULL;
+    free(current_buffer);
+    current_buffer = NULL;
+
+    free(initial_buffer);
+    initial_buffer = NULL;
+
+    free(broadcast_address);
+    broadcast_address = NULL;
+
+    rpse_dll_deleteStringDLL(&head);
 
     close(sockfd);
     return head;

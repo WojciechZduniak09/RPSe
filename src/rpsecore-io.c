@@ -25,6 +25,7 @@
 #include "../include/rpsecore-io.h"
 
 bool enter_to_continue_first_call = true;
+pthread_mutex_t enter_to_continue_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
 ================
@@ -64,6 +65,7 @@ rpse_io_enterToContinue(void)
 void *
 rpse_io_threadedEnterToContinue(void *arg)
 {
+	pthread_mutex_lock(&enter_to_continue_lock);
 	if (enter_to_continue_first_call)
 		enter_to_continue_first_call = false;
 	else
@@ -72,6 +74,8 @@ rpse_io_threadedEnterToContinue(void *arg)
 	printf("Press enter to continue . . . ");
 	getchar();
 	printf("\n");
+
+	pthread_mutex_unlock(&enter_to_continue_lock);
 
 	pthread_exit(NULL);
 	return NULL;

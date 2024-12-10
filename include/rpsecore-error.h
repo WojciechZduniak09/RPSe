@@ -28,21 +28,4 @@ void rpse_error_errorMessage(const char* ACTION);
 
 void rpse_error_blameDev(void);
 
-void rpse_error_checkDLLNodePtrMalloc(string_dll_node_t **p_target_node);
-void rpse_error_checkDLLNodeMalloc(string_dll_node_t *target_node);
-
-void rpse_error_checkStringMalloc(char *target_string);
-void rpse_error_checkStringArrayMalloc(char **target_str_arr);
-
-void rpse_error_checkMoveDataMalloc(move_data_t *target_move_data);
-
-void rpse_error_checkSocketOpRetVal(const int RET_VAL, int *sockfd);
-
-void rpse_error_checkFirstThreadCreation(const int RET_VAL);
-
-void rpse_error_checkuShortMalloc(unsigned short int *target_ushort);
-
-void rpse_error_checkLessThan0RetVal(const int RET_VAL);
-void rpse_error_checkFileExistance(FILE *fptr);
-
 #endif

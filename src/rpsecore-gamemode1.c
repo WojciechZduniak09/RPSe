@@ -53,8 +53,13 @@ _rpse_gamemode1_usernameMenu(user_input_data_t *input_data, const unsigned short
             }
 
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
-        rpse_dll_deleteStringDLLDuplicateNodes(&head);
-        exact_match_found = rpse_broadcast_verifyAndTrimDLLStructure(&head, P2P_TYPE, input_data->input.str_input);
+
+        if (rpse_dll_deleteStringDLLDuplicateNodes(&head) == EXIT_SUCCESS)
+            exact_match_found = rpse_broadcast_verifyAndTrimDLLStructure(&head, P2P_TYPE, input_data->input.str_input);
+        /* If there was nothing received here */
+        else
+            exact_match_found = false;
+        
 
         if (exact_match_found)
             printf("This username has already been taken, please try again.\n");
@@ -63,6 +68,9 @@ _rpse_gamemode1_usernameMenu(user_input_data_t *input_data, const unsigned short
             rpse_dll_deleteStringDLL(&head);
     }
     while (exact_match_found);
+
+    free(input_data->input.str_input);
+    input_data->input.str_input = NULL;
 
 }
 
@@ -78,7 +86,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     printf("This gamemode is still a work in progress, please try again in a future update.\n");
     sleep(1);
 
-    printf("Here is a sneak peak:\n\n");
+    printf("Here is a sneak peek:\n\n");
     sleep(1);
     _rpse_gamemode1_usernameMenu(input_data, 1);
     /* BROADCAST USERNAME AFTER SUCCESSFUL MENU EXIT */

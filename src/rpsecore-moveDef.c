@@ -121,10 +121,10 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 
 	_rpse_moveDef_customMoveExplanation();
 	
-	move_data_t *new_move_data = calloc(1, sizeof(move_data_t *));
+	move_data_t *new_move_data = NULL;
 
 	for (unsigned short int attempt = 1; attempt <= 3 && new_move_data == NULL; attempt++)
-		new_move_data = calloc(1, sizeof(move_data_t *));
+		new_move_data = calloc(1, sizeof(move_data_t));
 	
 	if (new_move_data == NULL)
 		{

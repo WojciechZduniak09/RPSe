@@ -121,7 +121,12 @@ rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *mov
 
     /* Thread is global */
     int ret_val = pthread_create(&enterToContinue_thread_ID, NULL, &rpse_io_threadedEnterToContinue, NULL);
-    rpse_error_checkFirstThreadCreation(ret_val);
+    if (ret_val != EXIT_SUCCESS)
+        {
+        perror("Unable to create enter to continue pthread, aborting for debug purposes...");
+        rpse_error_errorMessage("attempting to create pthread");
+        abort();
+        }
     
     signal(SIGALRM, _rpse_sharedGamemodeMenus_terminateEnterToContinue);
 

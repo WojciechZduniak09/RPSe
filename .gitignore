@@ -15,6 +15,5 @@
 
 bin/
 obsolete/
-.TODO.md
-.RELEASE.md
+TODO
 .vscode/

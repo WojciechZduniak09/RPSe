@@ -79,13 +79,34 @@ rpse_dll_createStringDLL(const char *DATA)
 		rpse_error_blameDev();
 		return NULL;
 		}
-    string_dll_node_t *new_node = calloc(1, sizeof(string_dll_node_t));
-    rpse_error_checkDLLNodeMalloc(new_node);
+
+    string_dll_node_t *new_node = NULL;
+
+	for (unsigned short int attempt = 0; attempt < 3 && new_node == NULL; attempt++)
+		new_node = calloc(1, sizeof(string_dll_node_t));
+
+    if (new_node == NULL)
+		{
+		perror("\"new_node == NULL\" while attempting to calloc() memory for it");
+		rpse_error_errorMessage("attempting to calloc() memory for a doubly linked list node");
+		return NULL;
+		}
 
     new_node->prev = NULL;
 
 	const size_t NCHAR = strlen(DATA) + 1;
-	new_node->data = calloc(NCHAR, sizeof(char));
+	new_node->data = NULL;
+
+	for (unsigned short int attempt = 0; attempt < 3 && new_node->data == NULL; attempt++)
+		new_node->data = calloc(NCHAR, sizeof(char));
+
+	if (new_node->data == NULL)
+		{
+		perror("\"new_node->data == NULL\" while attempting to calloc() memory for it");
+		rpse_error_errorMessage("attempting to calloc() memory for a doubly linked list node's data");
+		return NULL;
+		}
+	
     strncpy(new_node->data, DATA, strlen(DATA)+1);
     
 	new_node->next = NULL;
@@ -216,18 +237,19 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 {
 	if (head == NULL)
 		{
-		perror("\"head == NULL\" while attempting to delete duplicate string DLL nodes");
+		/* Not much of a problem here */
 		return EXIT_FAILURE;
 		}
 	
 	else if ((*head) == NULL)
 		{
-		perror("\"(*head) == NULL\" while attempting to delete duplicate string DLL nodes");
+		/* Not much of a problem here either */
 		return EXIT_FAILURE;
 		}
 
 	else if ((*head)->prev != NULL)
 		{
+		/* Big uh oh here */
 		perror("\"(*head)->prev != NULL\" while attempting to delete duplicate string DLL nodes");
 		rpse_error_blameDev();
 		return EXIT_FAILURE;
@@ -235,7 +257,7 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 
 	string_dll_node_t *current_head_dll_node = *head;
 	string_dll_node_t *current_auxiliary_dll_node = rpse_dll_createStringDLL("Initialiser data for auxiliary DLL which cannot be used by other "
-																"functions as it's longer than the Great Wall of China.");
+																			 "functions as it's longer than the Great Wall of China.");
 	int current_head_dll_element_num = 1;
 
 	bool element_deleted = false;
@@ -280,6 +302,12 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 			}
 		
 		current_head_dll_node = current_head_dll_node->next;
+		}
+
+	if (rpse_dll_deleteStringDLL(&current_auxiliary_dll_node) == EXIT_FAILURE)
+		{
+		perror("Failure while attempting to delete \"current_auxiliary_dll_node\"");
+		return EXIT_FAILURE;
 		}
 
 	return EXIT_SUCCESS;

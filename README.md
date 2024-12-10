@@ -1,4 +1,4 @@
-# RPSe (Rock Paper Scissors expanded) - v0.1.0-alpha.1 - Index #
+# RPSe (Rock Paper Scissors extended) - v0.1.0-alpha.1 - Index #
 1. [Copyright information and licensing](#copyright-and-licensing).
 2. [Purpose of this software](#purpose-of-this-software).
 3. [Installation guide](#installation-guide).
