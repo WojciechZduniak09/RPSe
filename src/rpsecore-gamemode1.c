@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 
 /*
@@ -69,6 +70,7 @@ _rpse_gamemode1_usernameMenu(user_input_data_t *input_data, const unsigned short
     }
     while (exact_match_found);
 
+    memset(input_data->input.str_input, 0, strlen(input_data->input.str_input) + 1);
     free(input_data->input.str_input);
     input_data->input.str_input = NULL;
 

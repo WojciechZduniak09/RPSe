@@ -15,8 +15,11 @@
 12. Adapted ```.gitignore``` to not have release nor TODO files in it.
 13. Fixed ```rpsecore-moveDef```, ```rpsecore-broadcast```, ```rpsecore-gamemode1``` and ```rpsecore-dll``` memory failures.
 14. Added mutex to ```rpsecore-io.c``` for multithreaded function ```rpse_io_threadedEnterToContinue(void *arg()```.
-# Older NEWS data #
-Older news data can be found in the ```ONEWS.md``` file.
+15. Removed ```exit(1)``` from ```rpse_broadcast_receiveBroadcast()``` and replaced it with a ```continue```.
+16. Made ```_rpse_broadcast_getBroadcastAddress()``` more GNU-standard-compliant.
+17. Added memset() for input string in ```_rpse_gamemode1_usernameMenu()```.
+# Older NEWS information #
+Older news information can be found in the ```ONEWS.md``` archive file.
 
 # Copyright and Licensing #
 

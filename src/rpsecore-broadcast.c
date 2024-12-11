@@ -105,9 +105,7 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
         
         const char *RET_VAL = inet_ntop(AF_INET, &broadcast_addr.sin_addr, broadcast_addr_str, INET_ADDRSTRLEN);
         if (RET_VAL == NULL)
-            {
             continue;
-            }
         else
             broadcast_addr_found = true;
         }
@@ -402,33 +400,17 @@ rpse_broadcast_receiveBroadcast(void)
         return NULL;
         }
 
-    char *initial_buffer = NULL;
-    for (unsigned short int attempt = 0; attempt < 3 && initial_buffer == NULL; attempt++)
-        initial_buffer = calloc(RECEIVER_BUFFER_SIZE, sizeof(char));
-
-    if (initial_buffer == NULL)
-        {
-        perror("\"initial_buffer_val == NULL\" while attempting to calloc() memory fot it");
-        rpse_error_errorMessage("attempting to calloc() memory for a string");
-        return NULL;
-        }
-
     printf("Searching for players on your network, please wait.\n");
 
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
-        strncpy(initial_buffer, current_buffer, strlen(current_buffer) + 1);
         
         int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0,
                                               (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
-        if (received_broadcast_len == -1 && strncmp(current_buffer, initial_buffer, RECEIVER_BUFFER_SIZE) != 0)
-            {
-            rpse_error_errorMessage("recvfrom()");
-            close(sockfd);
-            exit(1);
-            }
+        if (received_broadcast_len < 0)
+            continue;
         
-        if(strlen(current_buffer) > 1)
+        if (strlen(current_buffer) > 1)
             current_buffer[received_broadcast_len] = '\0';
 
         if (head->data == NULL)
@@ -437,14 +419,10 @@ rpse_broadcast_receiveBroadcast(void)
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
-        memset(initial_buffer, 0, RECEIVER_BUFFER_SIZE);
         }
 
     free(current_buffer);
     current_buffer = NULL;
-
-    free(initial_buffer);
-    initial_buffer = NULL;
 
     free(broadcast_address);
     broadcast_address = NULL;
@@ -479,6 +457,7 @@ rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA)
     pthread_exit(NULL);
     return NULL;
 }
+
 /* Should be threaded, view header for P2P types */
 void *
 rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE)
