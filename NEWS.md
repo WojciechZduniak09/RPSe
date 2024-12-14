@@ -18,6 +18,13 @@
 15. Removed ```exit(1)``` from ```rpse_broadcast_receiveBroadcast()``` and replaced it with a ```continue```.
 16. Made ```_rpse_broadcast_getBroadcastAddress()``` more GNU-standard-compliant.
 17. Added memset() for input string in ```_rpse_gamemode1_usernameMenu()```.
+18. Removed buffer size in gamemode menu.
+19. Added user type menu.
+20. Made username menu return a status value.
+21. Removed obsolete directories.
+22. Added username validity confirmation to username creation menu.
+23. Removed ```obsolete/``` directory.
+24. Added parentheses to installation script's additional info for options 1 and 2.
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.
 

@@ -57,8 +57,8 @@ Fast explanation
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
 #define BROADCAST_INTERVAL 10 /* seconds */
-#define P2P1_REGEX_CONSTANT "@RPSe\\.P2P1\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
-#define P2P2_REGEX_CONSTANT "@RPSe\\.P2P2\\/invitesOn\\(0-9\\.){7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
+#define SERVER_REGEX_CONSTANT "@RPSe\\.server\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
+#define CLIENT_REGEX_CONSTANT "@RPSe\\.client\\/invitesOn\\(0-9\\.){7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
                             "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
 
@@ -210,7 +210,7 @@ _rpse_broadcast_doublePublishBroadcast(const broadcast_data_t *BROADCAST_DATA)
 BROADCAST VERIFIER
 ==================
 
-View header file for P2P types
+View header file for user types
 */
 
 unsigned short int
@@ -234,7 +234,7 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
 
     char *expected_pattern = NULL;
     for (unsigned short int attempt = 0; attempt < 3 && expected_pattern == NULL; attempt++)
-        expected_pattern = calloc(strlen(P2P2_REGEX_CONSTANT) + 1, sizeof(char));
+        expected_pattern = calloc(strlen(CLIENT_REGEX_CONSTANT) + 1, sizeof(char));
     
     if (expected_pattern == NULL)
         {
@@ -254,10 +254,10 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
     switch (P2P_TYPE)
         {
         case 1:
-            strncat(expected_pattern, P2P1_REGEX_CONSTANT, strlen(P2P1_REGEX_CONSTANT) + 1);
+            strncat(expected_pattern, SERVER_REGEX_CONSTANT, strlen(SERVER_REGEX_CONSTANT) + 1);
             break;
         case 2:
-            strncat(expected_pattern, P2P2_REGEX_CONSTANT, strlen(P2P2_REGEX_CONSTANT) + 1);
+            strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
             break;        
         }
 
@@ -439,7 +439,7 @@ BROADCASTER/RECEIVER LOOP FUNCTIONS
 ===================================
 */
 
-/* Should be threaded, view header for P2P types */
+/* Should be threaded, view header for user types */
 void *
 rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA)
 {
@@ -458,7 +458,7 @@ rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA)
     return NULL;
 }
 
-/* Should be threaded, view header for P2P types */
+/* Should be threaded, view header for user types */
 void *
 rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE)
 {

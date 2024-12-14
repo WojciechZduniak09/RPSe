@@ -167,7 +167,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 			new_move_data->winning_combinations[move_array_index][move_index] = STD_MOVE_COMBINATIONS[move_array_index][move_index];
 		}
 	
-	/* Setting up custom move */
+	/* Setting up custom move - 30 character limit is due to the UDP broadcast aspect only*/
 	printf("[1/4] What should your custom move be named? (30 character limit)\n");
 	input_data->buffer_size = 30;
 

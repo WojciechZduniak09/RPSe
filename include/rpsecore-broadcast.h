@@ -19,11 +19,11 @@
 #define RPSECORE_BROADCAST_H
 
 /*
-=========
-P2P TYPES
-=========
-(1) P2P1 --> For finding match players
-(2) P2P2 --> For finding match hosts
+==========
+USER TYPES
+==========
+(1) Server --> For finding match players
+(2) Client --> For finding match hosts
 */
 
 /*
@@ -45,9 +45,9 @@ Maximum values and names excluding \0
 Formats
 -------
 (1) For hosts looking for players (deemed as player 1).
-    - USERNAME@RPSe.P2P1/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)
+    - USERNAME@RPSe.server/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)
 (2) For clients looking for game hosts (deemed as player 2).
-    - USERNAME@RPSe.P2P2/invitesOn(IP)(PORT)
+    - USERNAME@RPSe.client/invitesOn(IP)(PORT)
 */
 
 #include <stdbool.h>
@@ -56,12 +56,12 @@ Formats
 typedef struct
 {
     char username[31];
-    char* message[118]; /* 118 is the maximum, not constant value */
+    char* message[120]; /* 118 is the maximum, not constant value */
 } broadcast_data_t;
 
-unsigned short int rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int P2P_TYPE, const char *USERNAME);
+unsigned short int rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME);
 string_dll_node_t * rpse_broadcast_receiveBroadcast(void);
 void * rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA);
-void * rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE);
+void * rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE);
 
 #endif

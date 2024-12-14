@@ -58,9 +58,9 @@ done
 while ! [[ $INSTALLATION_MODE =~ ^[1-4]$ ]]; do
 	echo "<--- Installation options --->"
 	echo "1. Install required dependencies."
-	echo -e "\t Used for compiling RPSe."
+	echo -e "\t(Used for compiling RPSe)."
 	echo "2. Install optional dependencies."
-	echo -e "\tUsed for debug.sh."
+	echo -e "\t(Used for debug.sh)."
 	echo "3. Install all dependencies."
 	echo "4. Cancel installation."
 	read -p "Choose an option by number: " INSTALLATION_MODE

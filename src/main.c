@@ -65,7 +65,6 @@ _rpse_main_mainMenu(user_input_data_t *input_data)
 
     input_data->interval[0] = 1;
     input_data->interval [1] = 2;
-    input_data->buffer_size = 2;
     
     if (rpse_io_int(input_data, false, "Select a gamemode by it's number: ") == EXIT_FAILURE)
 		{

@@ -34,12 +34,12 @@ To install RPSe, you must:
       * gdb (optional, for testing)
       * valgrind (optional, for testing)
 
-Note: if your system uses APT, DNF or PACMAN as it's package manager, an automated shell script at 
+Note: if your system uses *APT*, *DNF* or *pacman* as it's package manager, an automated shell script at 
       ```RPSe/scripts/dependency-install.sh``` can auto-install dependencies by running the script as you would
       RPSe.
 
-  2. Install RPSe directly from it's [GitHub repository](https://github.com/Boyek1997/RPSe)'s releases section.
-  3. Run ```make all``` inside RPSe's root directory using a terminal (```RPSe/```).
+  2. Install RPSe directly from it's [GitHub repository](https://github.com/WojciechZduniak09/RPSe)'s releases section.
+  3. Run ```make all``` inside RPSe's root directory (```RPSe/```) using a terminal.
 Now, you can just go to ```RPSe/bin/``` and run RPSe by typing ```./RPSe``` in your terminal.
 
 Note: running ```make clean``` to uninstall RPSe removes the entire ```RPSe/bin/``` directory!
