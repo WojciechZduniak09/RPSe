@@ -59,6 +59,7 @@ typedef struct
     char* message[120]; /* 118 is the maximum, not constant value */
 } broadcast_data_t;
 
+void rpse_broadcast_waitUntilInterval(void);
 unsigned short int rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME);
 string_dll_node_t * rpse_broadcast_receiveBroadcast(void);
 void * rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA);

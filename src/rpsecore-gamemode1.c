@@ -55,7 +55,8 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
             rpse_error_errorMessage("attempting to get string input");
             return EXIT_FAILURE;
             }
-
+    
+        rpse_broadcast_waitUntilInterval();
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
 
         if (rpse_dll_deleteStringDLLDuplicateNodes(&head) == EXIT_SUCCESS)

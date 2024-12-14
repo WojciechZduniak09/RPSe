@@ -122,22 +122,28 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
     return EXIT_SUCCESS;
 }
 
+/*
+===============
+INTERVAL WAITER
+===============
+*/
 
-static void 
-_rpse_broadcast_waitUntilInterval(void)
+void
+rpse_broadcast_waitUntilInterval(void)
 {
+    printf("Please wait...\n");
     time_t now;
     struct tm *current_time;
     unsigned short int seconds = 0;
 
     do
         {
+        sleep(0.5);
         time(&now);
         current_time = localtime(&now);
         seconds = current_time->tm_sec;
-        sleep(1);
         }
-    while (seconds % BROADCAST_INTERVAL == 0);
+    while (seconds % BROADCAST_INTERVAL != 0);
 }
 
 static void 
@@ -447,7 +453,7 @@ rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA)
 
     do
         {
-        _rpse_broadcast_waitUntilInterval();
+        rpse_broadcast_waitUntilInterval();
         _rpse_broadcast_doublePublishBroadcast(BROADCAST_DATA);
         }
     while (broadcaster_termination_flag == 0);
@@ -466,7 +472,7 @@ rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE)
 
     do
         {
-        _rpse_broadcast_waitUntilInterval();
+        rpse_broadcast_waitUntilInterval();
 
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
 

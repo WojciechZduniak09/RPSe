@@ -25,6 +25,8 @@
 22. Added username validity confirmation to username creation menu.
 23. Removed ```obsolete/``` directory.
 24. Added parentheses to installation script's additional info for options 1 and 2.
+25. Fixed ```rpse_broadcast_waitUntilInterval()``` and made it an non-static function.
+
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.
 
