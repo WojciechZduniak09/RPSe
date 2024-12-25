@@ -1,7 +1,7 @@
 /*
  * RPSe, a rock paper scissors game for Linux systems.
  *
- * Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak
+ * Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
  *
  * This file is part of RPSe.
  *
@@ -38,7 +38,7 @@ _rpse_main_licenseStatement(void)
 {
 	printf("RPSe is released under license GNU General Public License v3.0.\n"
 			"RPSe (Rock Paper Scissors expanded), a rock paper scissors game for Linux systems.\n\n"
-			"Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak\n\n"
+			"Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak\n\n"
 			"RPSe is free software: you can redistribute it and/or modify it under the terms of the "
 			"GNU General Public License as published\n"
 			"by the Free Software Foundation, either version 3 of the License, or (at your option) "

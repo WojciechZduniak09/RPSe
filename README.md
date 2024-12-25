@@ -9,7 +9,7 @@ RPSe is released under license GNU General Public License v3.0
 
 RPSe, a rock paper scissors game for Linux systems.
 
-Copyright (C) 2024 Wojciech Zduniak, Marcin Zduniak
+Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 
 This file is part of RPSe.
 
@@ -48,5 +48,6 @@ Note: running ```make clean``` to uninstall RPSe removes the entire ```RPSe/bin/
 1. WojciechZduniak09 (Wojciech Zduniak)
     * Documentation.
     * Code.
+    * Contact at <githubinquiries.ladder140@passinbox.com> for anything you'd like.
 2. mz7mz7mz7 (Marcin Zduniak)
     * Prior .gitignore file.
