@@ -34,7 +34,7 @@ If not, see <https://www.gnu.org/licenses/>.
 EOF
 
 REQUIRED_DEPENDENCIES=("gcc" "make")
-OPTIONAL_DEPENDENCIES=("" "valgrind" "gdb") # Element 0 is for xz-utils
+OPTIONAL_DEPENDENCIES=("valgrind" "gdb")
 SUPPORTED_PACKAGE_MANAGERS=("apt" "dnf" "pacman")
 INSTALLATION_MODE=0
 
@@ -44,19 +44,19 @@ for MANAGER in "${SUPPORTED_PACKAGE_MANAGERS[@]}"; do
 	if [ $? -eq 0 ]; then
 		case $MANAGER in
 			"apt")
-				OPTIONAL_DEPENDENCIES+="xz-utils"
+				REQUIRED_DEPENDENCIES+=" libssl-dev"
 				UPDATE_PACKAGE_LIST="sudo apt update"
 				UPGRADE_PACKAGES="sudo apt upgrade -y"
 				INSTALLATION_PRESET="sudo apt install -y"
 				;;
 			"dnf")
-				OPTIONAL_DEPENDENCIES+="xz"
+				REQUIRED_DEPENDENCIES+=" openssl-devel"
 				UPDATE_PACKAGE_LIST="sudo dnf check-update"
 				UPGRADE_PACKAGES="sudo dnf upgrade -y"
 				INSTALLATION_PRESET="sudo dnf install -y"
 				;;
 			"pacman")
-				OPTIONAL_DEPENDENCIES+="xz"
+				REQUIRED_DEPENDENCIES+=" openssl"
 				UPDATE_PACKAGE_LIST="sudo pacman -Sy"
 				UPGRADE_PACKAGES="sudo pacman -Syu"
 				INSTALLATION_PRESET="sudo pacman -Sy"

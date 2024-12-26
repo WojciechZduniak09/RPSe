@@ -31,14 +31,15 @@ You should have received a copy of the GNU General Public License along with RPS
 ## Installation guide ##
 To install RPSe, you must:
   1. Download all dependencies for your Linux system
-      * make (required)
-      * gcc (required)
-      * gdb (optional, for testing)
-      * valgrind (optional, for testing)
+      * make (required).
+      * gcc (required).
+      * openssl (required).
+      * gdb (optional, for testing).
+      * valgrind (optional, for testing).
 
 Note: if your system uses *APT*, *DNF* or *pacman* as it's package manager, an automated shell script at 
       ```RPSe/scripts/dependency-install.sh``` can auto-install dependencies by running the script as you would
-      RPSe.
+      RPSe. It may not work for non-Debian-derivative systems, so use with caution.
 
   2. Install RPSe directly from it's [GitHub repository](https://github.com/WojciechZduniak09/RPSe)'s releases section.
   3. Run ```make all``` inside RPSe's root directory (```RPSe/```) using a terminal.
