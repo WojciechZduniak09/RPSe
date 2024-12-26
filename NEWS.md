@@ -1,6 +1,6 @@
 # RPSe development news #
 
-## v1.1.0-alpha.2 ##
+## v0.2.0-alpha.2 ##
 1. Added contact information for Wojciech Zduniak.
 2. Added GPLv3 logo to *README.md*.
 3. Added OpenSSL as dependency in *README.md* and *dependency-install.sh*.
