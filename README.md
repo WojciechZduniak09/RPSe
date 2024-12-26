@@ -24,7 +24,7 @@ You should have received a copy of the GNU General Public License along with RPS
 ## Purpose of this software ##
   * This is rock paper scissors but with an extra move to play with. Basically, you can play either rock, paper, scissors or x, which you can fully customise (by a name and custom properties).
   * PvE is only available at this time.
-  * Current version: v0.1.0-alpha.1 (03/09/2024).
+  * Current version: v0.2.0-alpha.2 (I don't know when I'm releasing this one).
   * This software is being made for educational purposes to learn C lang.
   * Development schedules are very unstable, so updates will probably be spaced out by a long time.
 
