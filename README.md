@@ -5,6 +5,8 @@
 4. [List of contrbutors](#list-of-contributors).
 
 ## Copyright and licensing ##
+![RPSe uses the GNU General Public Licencse v3.0 and can be used with later versions of the GNU General Public License](images/gplv3-or-later.png "This project uses the GPL v2.0 or later versions, if desired")
+
 RPSe is released under license GNU General Public License v3.0
 
 RPSe, a rock paper scissors game for Linux systems.
