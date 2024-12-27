@@ -78,7 +78,7 @@ while ! [[ "$INSTALLATION_MODE" =~ ^[1-4]$ ]]; do
 	echo -e "\t(Used for debug.sh)."
 	echo "3. Install all dependencies."
 	echo "4. Cancel installation."
-	read -p -r "Choose an option by number: " INSTALLATION_MODE
+	read -r -p "Choose an option by number: " INSTALLATION_MODE
 done
 
 if [ "$INSTALLATION_MODE" -eq 4 ]; then
