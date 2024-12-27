@@ -43,19 +43,19 @@ for MANAGER in "${SUPPORTED_PACKAGE_MANAGERS[@]}"; do
 	if "$MANAGER" --version >/dev/null 2>&1; then
 		case "$MANAGER" in
 			"apt")
-				REQUIRED_DEPENDENCIES+=(" libsodium-dev")
+				REQUIRED_DEPENDENCIES+=("libsodium-dev")
 				UPDATE_PACKAGE_LIST="sudo apt update"
 				UPGRADE_PACKAGES="sudo apt upgrade -y"
 				INSTALLATION_PRESET="sudo apt install -y"
 				;;
 			"dnf")
-				REQUIRED_DEPENDENCIES+=(" libsodium-devel")
+				REQUIRED_DEPENDENCIES+=("libsodium-devel")
 				UPDATE_PACKAGE_LIST="sudo dnf check-update"
 				UPGRADE_PACKAGES="sudo dnf upgrade -y"
 				INSTALLATION_PRESET="sudo dnf install -y"
 				;;
 			"pacman")
-				REQUIRED_DEPENDENCIES+=(" libsodium")
+				REQUIRED_DEPENDENCIES+=("libsodium")
 				UPDATE_PACKAGE_LIST="sudo pacman -Sy"
 				UPGRADE_PACKAGES="sudo pacman -Syu"
 				INSTALLATION_PRESET="sudo pacman -Sy"
@@ -86,28 +86,28 @@ if [ "$INSTALLATION_MODE" -eq 4 ]; then
 fi
 
 # Upgrading packages.
-"$UPDATE_PACKAGE_LIST"
-"$UPGRADE_PACKAGES"
+$UPDATE_PACKAGE_LIST
+$UPGRADE_PACKAGES
 
 # Installing packages.
 case "$INSTALLATION_MODE" in
 	1)
 		for REQUIRED_DEPENDENCY in "${REQUIRED_DEPENDENCIES[@]}"; do
-			"$INSTALLATION_PRESET" "$REQUIRED_DEPENDENCY"
+			$INSTALLATION_PRESET "$REQUIRED_DEPENDENCY"
 		done
 		;;
 	2)
 		for OPTIONAL_DEPENDENCY in "${OPTIONAL_DEPENDENCIES[@]}"; do
-			"$INSTALLATION_PRESET" "$OPTIONAL_DEPENDENCY"
+			$INSTALLATION_PRESET "$OPTIONAL_DEPENDENCY"
 		done
 		;;
 	3)
 		for REQUIRED_DEPENDENCY in "${REQUIRED_DEPENDENCIES[@]}"; do
-			"$INSTALLATION_PRESET" "$REQUIRED_DEPENDENCY"
+			$INSTALLATION_PRESET "$REQUIRED_DEPENDENCY"
 		done
 		
 		for OPTIONAL_DEPENDENCY in "${OPTIONAL_DEPENDENCIES[@]}"; do
-			"$INSTALLATION_PRESET" "$OPTIONAL_DEPENDENCY"
+			$INSTALLATION_PRESET "$OPTIONAL_DEPENDENCY"
 		done
 		;;
 esac
