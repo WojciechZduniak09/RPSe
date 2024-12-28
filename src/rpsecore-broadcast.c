@@ -50,6 +50,7 @@ Fast explanation
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
+#include <sodium.h>
 
 #define BROADCAST_PORT 51673
 #define RECEIVER_BUFFER_SIZE 101
@@ -61,7 +62,7 @@ Fast explanation
 #define CLIENT_REGEX_CONSTANT "@RPSe\\.client\\/invitesOn\\(0-9\\.){7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
                             "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
-
+#define BROADCAST_CHACHA20_ENCRYPTION_KEY "puTxV6ZLHgTSku61/e3C3hGp+chxUbrGs6+lxbBpraI=" /* It's constant as how else would users be able to know that one is a player or not? It's not like I own a central server or anything */
 /*
 ================
 GLOBAL VARIABLES
@@ -146,6 +147,12 @@ rpse_broadcast_waitUntilInterval(void)
     while (seconds % BROADCAST_INTERVAL != 0);
 }
 
+/*
+=====================
+MORE STATIC FUNCTIONS
+=====================
+*/
+
 static void 
 _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
 {
@@ -160,7 +167,7 @@ _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
 /* Go down to around line 254 for the receiver */
 
 static unsigned short int
-_rpse_broadcast_doublePublishBroadcast(const broadcast_data_t *BROADCAST_DATA)
+_rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 {
     struct sockaddr_in broadcast_addr;
 
@@ -200,9 +207,24 @@ _rpse_broadcast_doublePublishBroadcast(const broadcast_data_t *BROADCAST_DATA)
         }
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
 
+    /* We add the nonce to the end of the broadcast */
+    randombytes_buf(broadcast_data->nonce, sizeof(broadcast_data->nonce));
+    char ciphertext[sizeof(broadcast_data->encrypted_message)];
+    if (crypto_stream_chacha20_xor(ciphertext, broadcast_data->message, strlen(broadcast_data->message), broadcast_data->nonce,
+                                                               BROADCAST_CHACHA20_ENCRYPTION_KEY) != EXIT_SUCCESS)
+    	{
+	perror("Unable to encrypt broadcast");
+	rpse_error_errorMessage("encrypting a UDP broadcast");
+	return EXIT_FAILURE;
+	}
+    memset(broadcast_data->encrypted_message, strlen(broadcast_data->encrypted_message), 0);
+    strncpy(broadcast_data->encrypted_message, ciphertext, strlen(ciphertext) + 1);
+    strncpy(broadcast_data->encrypted_message, "/nonce=", strlen("/nonce=") + 1);
+    strncpy(broadcast_data->encrypted_message, broadcast_data->nonce, strlen(broadcast_data->nonce) + 1);
+
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
-        ret_val = sendto(sockfd, BROADCAST_DATA->message, strlen(*(BROADCAST_DATA->message)), 0,
+        ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen(*(broadcast_data->encrypted_message)), 0,
                          (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
 
     free(broadcast_address);
@@ -426,6 +448,23 @@ rpse_broadcast_receiveBroadcast(void)
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
         }
+
+    /* We get rid of the nonce from each of the messages and decrypt them */
+    string_dll_node_t *current_node = head;
+    do
+        {
+        broadcast_data_t *current_broadcast_data;
+        memcpy(current_broadcast_data->encrypted_message, current_node->data, 125 + crypto_secretbox_MACBYTES);
+        memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, NONCE_SIZE); /* NONCE_SIZE is from header */
+        memset(current_node->data, 0, strlen(current_node->data) + 1);
+        crypto_stream_chacha20_xor(current_node->data, current_broadcast_data->encrypted_message, strlen(current_broadcast_data->encrypted_message) + 1,
+                                                             current_broadcast_data->nonce, BROADCAST_CHACHA20_ENCRYPTION_KEY);
+        if (current_node->next == NULL)
+            current_node = NULL;
+        else
+            current_node = current_node->next;
+        }
+    while (current_node != NULL);
 
     free(current_buffer);
     current_buffer = NULL;

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <sodium.h>
 
 #define PVP 1
 #define EXIT_GAME 2
@@ -97,7 +98,12 @@ main(void)
 		.input.int_input = 0
 	};
 	unsigned short int selected_gamemode = 2; /* Just for initialisation */
-
+	if (sodium_init() < 0)
+		{
+		perror("Sodium (the encryption lib) init failed");
+		rpse_error_errorMessage("initialising Sodium");
+		exit(EXIT_FAILURE);
+		}
 	do
 		{
 		selected_gamemode = _rpse_main_mainMenu(input_data);

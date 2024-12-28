@@ -40,23 +40,28 @@ Maximum values and names excluding \0
 (4) MOVENAME = char[30] --> Represents custom move name
 (5) VALUES = char[3] --> Each is t (true) or f (false) as bools to say whether MOVENAME can beat rock, paper 
                          and scissors, respectively
+(6) NONCE = unsigned char[24] --> Represents the encryption nonce
 
 -------
 Formats
 -------
 (1) For hosts looking for players (deemed as player 1).
-    - USERNAME@RPSe.server/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)
+    - USERNAME@RPSe.server/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)/nonce=NONCE
 (2) For clients looking for game hosts (deemed as player 2).
-    - USERNAME@RPSe.client/invitesOn(IP)(PORT)
+    - USERNAME@RPSe.client/invitesOn(IP)(PORT)/nonce=NONCE
 */
 
 #include <stdbool.h>
+#include <sodium.h>
 #include "rpsecore-dll.h"
 
+#define NONCE_SIZE crypto_secretbox_NONCEBYTES /* probably 24 */
 typedef struct
 {
+    char nonce[NONCE_SIZE];
     char username[31];
-    char* message[120]; /* 118 is the maximum, not constant value */
+    char message[126 + NONCE_SIZE + 16];
+    char encrypted_message[126 + crypto_secretbox_MACBYTES + NONCE_SIZE]
 } broadcast_data_t;
 
 void rpse_broadcast_waitUntilInterval(void);

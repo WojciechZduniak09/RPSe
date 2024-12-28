@@ -5,6 +5,7 @@
 2. Added GPLv3 logo to *README.md*.
 3. Added *libsodium* as dependency in *README.md* and *dependency-install.sh*.
 4. Fixed *dependency-install.sh".
+5. Added **ChaCha20 encryption** to *rpsecore-broadcast-h* and *rpsecore-broadcast-c*.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.
