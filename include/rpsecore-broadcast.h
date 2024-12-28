@@ -61,13 +61,13 @@ typedef struct
     char nonce[NONCE_SIZE];
     char username[31];
     char message[126 + NONCE_SIZE + 16];
-    char encrypted_message[126 + crypto_secretbox_MACBYTES + NONCE_SIZE]
+    char encrypted_message[126 + crypto_secretbox_MACBYTES + NONCE_SIZE];
 } broadcast_data_t;
 
 void rpse_broadcast_waitUntilInterval(void);
 unsigned short int rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME);
 string_dll_node_t * rpse_broadcast_receiveBroadcast(void);
-void * rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA);
+void * rpse_broadcast_broadcasterLoop(broadcast_data_t *broadcast_data);
 void * rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE);
 
 #endif

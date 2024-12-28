@@ -210,21 +210,21 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     /* We add the nonce to the end of the broadcast */
     randombytes_buf(broadcast_data->nonce, sizeof(broadcast_data->nonce));
     char ciphertext[sizeof(broadcast_data->encrypted_message)];
-    if (crypto_stream_chacha20_xor(ciphertext, broadcast_data->message, strlen(broadcast_data->message), broadcast_data->nonce,
-                                                               BROADCAST_CHACHA20_ENCRYPTION_KEY) != EXIT_SUCCESS)
+    if (crypto_stream_chacha20_xor((unsigned char *)ciphertext, (const unsigned char *)broadcast_data->message, strlen(broadcast_data->message), (const unsigned char *)broadcast_data->nonce,
+                                                               (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY) != EXIT_SUCCESS)
     	{
 	perror("Unable to encrypt broadcast");
 	rpse_error_errorMessage("encrypting a UDP broadcast");
 	return EXIT_FAILURE;
 	}
-    memset(broadcast_data->encrypted_message, strlen(broadcast_data->encrypted_message), 0);
+    memset(broadcast_data->encrypted_message, 0, strlen(broadcast_data->encrypted_message) + 1);
     strncpy(broadcast_data->encrypted_message, ciphertext, strlen(ciphertext) + 1);
     strncpy(broadcast_data->encrypted_message, "/nonce=", strlen("/nonce=") + 1);
     strncpy(broadcast_data->encrypted_message, broadcast_data->nonce, strlen(broadcast_data->nonce) + 1);
 
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
-        ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen(*(broadcast_data->encrypted_message)), 0,
+        ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
                          (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
 
     free(broadcast_address);
@@ -453,12 +453,19 @@ rpse_broadcast_receiveBroadcast(void)
     string_dll_node_t *current_node = head;
     do
         {
-        broadcast_data_t *current_broadcast_data;
-        memcpy(current_broadcast_data->encrypted_message, current_node->data, 125 + crypto_secretbox_MACBYTES);
+        broadcast_data_t *current_broadcast_data = 
+        &(broadcast_data_t)
+        {
+            .encrypted_message = "",
+            .message = "",
+            .nonce = "",
+            .username = ""
+        };
+        memcpy(current_broadcast_data->encrypted_message, current_node->data, strlen(current_node->data) - strlen("/nonce=") - NONCE_SIZE + 1);
         memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, NONCE_SIZE); /* NONCE_SIZE is from header */
         memset(current_node->data, 0, strlen(current_node->data) + 1);
-        crypto_stream_chacha20_xor(current_node->data, current_broadcast_data->encrypted_message, strlen(current_broadcast_data->encrypted_message) + 1,
-                                                             current_broadcast_data->nonce, BROADCAST_CHACHA20_ENCRYPTION_KEY);
+        crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, strlen(current_broadcast_data->encrypted_message) + 1,
+                                                             (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
         if (current_node->next == NULL)
             current_node = NULL;
         else
@@ -486,14 +493,14 @@ BROADCASTER/RECEIVER LOOP FUNCTIONS
 
 /* Should be threaded, view header for user types */
 void *
-rpse_broadcast_broadcasterLoop(const broadcast_data_t *BROADCAST_DATA)
+rpse_broadcast_broadcasterLoop(broadcast_data_t *broadcast_data)
 {
     signal(SIGUSR1, _rpse_broadcast_handleTerminationSignal);
 
     do
         {
         rpse_broadcast_waitUntilInterval();
-        _rpse_broadcast_doublePublishBroadcast(BROADCAST_DATA);
+        _rpse_broadcast_doublePublishBroadcast(broadcast_data);
         }
     while (broadcaster_termination_flag == 0);
 
