@@ -414,7 +414,6 @@ rpse_broadcast_receiveBroadcast(void)
         return NULL;
         }
 
-    string_dll_node_t* head = rpse_dll_createStringDLL("");
     time_t start = time(NULL);
 
     char *current_buffer = NULL;
@@ -427,8 +426,10 @@ rpse_broadcast_receiveBroadcast(void)
         rpse_error_errorMessage("attempting to calloc() memory for a string");
         return NULL;
         }
-
+    
     printf("Searching for players on your network, please wait.\n");
+
+    string_dll_node_t *head =  NULL;
 
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
@@ -440,9 +441,10 @@ rpse_broadcast_receiveBroadcast(void)
         
         if (strlen(current_buffer) > 1)
             current_buffer[received_broadcast_len] = '\0';
-
+        if (head == NULL)
+            head = rpse_dll_createStringDLL(current_buffer);
         if (head->data == NULL)
-            head->data = current_buffer;
+            strncpy(head->data, current_buffer, strlen(current_buffer) + 1);
         else
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
@@ -451,35 +453,45 @@ rpse_broadcast_receiveBroadcast(void)
 
     /* We get rid of the nonce from each of the messages and decrypt them */
     string_dll_node_t *current_node = head;
-    do
+    broadcast_data_t *current_broadcast_data = calloc(1, sizeof(broadcast_data_t));
+    if (current_broadcast_data == NULL)
         {
-        broadcast_data_t *current_broadcast_data = 
-        &(broadcast_data_t)
+        perror("\"current_broadcast_data == NULL while attempting to calloc() memory for it");
+        rpse_error_errorMessage("attempting to calloc() memory for a struct");
+        return NULL;
+        }
+    while (current_node != NULL)
         {
-            .encrypted_message = "",
-            .message = "",
-            .nonce = "",
-            .username = ""
-        };
-        memcpy(current_broadcast_data->encrypted_message, current_node->data, strlen(current_node->data) - strlen("/nonce=") - NONCE_SIZE + 1);
-        memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, NONCE_SIZE); /* NONCE_SIZE is from header */
-        memset(current_node->data, 0, strlen(current_node->data) + 1);
-        crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, strlen(current_broadcast_data->encrypted_message) + 1,
-                                                             (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
+        if (current_node->data != NULL)
+            {
+            memcpy(current_broadcast_data->encrypted_message, current_node->data, sizeof(current_broadcast_data->encrypted_message) - strlen("/nonce=") - NONCE_SIZE);
+            memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, NONCE_SIZE); /* NONCE_SIZE is from header */
+            memset(current_node->data, 0, strlen(current_node->data) + 1);
+            crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
+                                                                strlen(current_broadcast_data->encrypted_message) + 1,
+                                                                (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
+            }
+        else
+            {
+            current_node = NULL;
+            continue;
+            }
+        
         if (current_node->next == NULL)
             current_node = NULL;
         else
             current_node = current_node->next;
+        memset(current_broadcast_data, 0, sizeof(*current_broadcast_data));
         }
-    while (current_node != NULL);
+
+    free(current_broadcast_data);
+    current_broadcast_data = NULL;
 
     free(current_buffer);
     current_buffer = NULL;
 
     free(broadcast_address);
     broadcast_address = NULL;
-
-    rpse_dll_deleteStringDLL(&head);
 
     close(sockfd);
     return head;

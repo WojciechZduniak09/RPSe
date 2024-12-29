@@ -58,7 +58,7 @@ Formats
 #define NONCE_SIZE crypto_secretbox_NONCEBYTES /* probably 24 */
 typedef struct
 {
-    char nonce[NONCE_SIZE];
+    char nonce[NONCE_SIZE + 1];
     char username[31];
     char message[126 + NONCE_SIZE + 16];
     char encrypted_message[126 + crypto_secretbox_MACBYTES + NONCE_SIZE];
