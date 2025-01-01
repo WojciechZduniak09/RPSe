@@ -46,19 +46,28 @@ Maximum values and names excluding \0
 Formats
 -------
 (1) For hosts looking for players (deemed as player 1).
-    - USERNAME@RPSe.server/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)/nonce=NONCE
+	+ Decrypted message:
+		- USERNAME@RPSe.server/bindOn(IP)(PORT)/customMove(MOVENAME)(VALUES)
+	+ Encrypted message:
+		- gibberish/nonce=NONCE
 (2) For clients looking for game hosts (deemed as player 2).
-    - USERNAME@RPSe.client/invitesOn(IP)(PORT)/nonce=NONCE
+	+ Decrypted message:
+		- USERNAME@RPSe.client/invitesOn(IP)(PORT)
+	+ Encrypted message:
+		- gibberish/nonce=NONCE
 */
 
 #include <stdbool.h>
 #include <sodium.h>
 #include "rpsecore-dll.h"
 
+#define SERVER_USER_TYPE 1
+#define CLIENT_USER_TYPE 2
+#define BROADCAST_PORT 51673
 #define NONCE_SIZE crypto_secretbox_NONCEBYTES /* probably 24 */
 typedef struct
 {
-    char nonce[NONCE_SIZE + 1];
+    char nonce[(NONCE_SIZE + 2) / 3 * 4 + 1];
     char username[31];
     char message[126 + NONCE_SIZE + 16];
     char encrypted_message[126 + crypto_secretbox_MACBYTES + NONCE_SIZE];

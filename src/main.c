@@ -86,7 +86,7 @@ MAIN FUNCTION
 int 
 main(void)
 {
-	printf("RPSe v0.1.0-alpha.1.\n");
+	printf("RPSe v0.2.0-alpha.2.\n");
 	_rpse_main_licenseStatement();
 	rpse_io_enterToContinue();
 
@@ -109,6 +109,8 @@ main(void)
 		selected_gamemode = _rpse_main_mainMenu(input_data);
 		}
 	while ((selected_gamemode == PVP) ? rpse_gamemode1_pvp(input_data) : rpse_gamemode2_pve(input_data) != EXIT_GAME);
+	
+	printf("Thank you for playing!!\n");
 
 	return 0;
 }

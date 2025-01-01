@@ -20,25 +20,68 @@
 #include "../include/rpsecore-broadcast.h"
 #include "../include/rpsecore-dll.h"
 #include "../include/rpsecore-error.h"
+#include "../include/rpsecore-moveDef.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <ifaddrs.h>
 
-#define SERVER_USER_TYPE 1
-#define CLIENT_USER_TYPE 2
-
+pthread_t receiver_loop_thread_ID, broadcaster_loop_thread_ID;
 /*
 ================
 STATIC FUNCTIONS
 ================
 */
 
-/*
-char * must be freed by caller, see rpsecore-broadcast.h for P2P types. 
-Username found in input_data->input.str_input 
-*/
+/* ip must be freed */
+static char *
+_rpse_gamemode1_getIPAddress(void)
+{
+    struct ifaddrs *ifaddr;
+    if (getifaddrs(&ifaddr) == -1)
+        {
+        perror("getifaddrs");
+        rpse_error_errorMessage("attempting to get ifaddrs");
+        return NULL;
+        }
+    
+    struct ifaddrs *ifa;
+    int family;
+    char *host = NULL;
+    for (unsigned short int attempt = 0; attempt < 3 && host == NULL; attempt++)
+        host = calloc(NI_MAXHOST, sizeof(char));
+    if (host == NULL)
+        {
+        perror("calloc");
+        return NULL;
+        }
+    
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+        {
+        if (ifa->ifa_addr == NULL)
+            continue;
+        family = ifa->ifa_addr->sa_family;
+
+        if (family == AF_INET)
+            {
+            if (getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
+                {
+                perror("getnameinfo");
+                return NULL;
+                }
+            }
+        }
+    
+    freeifaddrs(ifaddr);
+    return host;
+}
+
+/* Username stores in *input_data->input.str_input*. See rpsecore-broadcast.h for user types. */
 static unsigned short int
 _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsigned short int USER_TYPE)
 {
@@ -48,36 +91,33 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
         printf("Create a username for your player (30 character limit): ");
 
         input_data->buffer_size = 31;
-        
+
         if (rpse_io_str(input_data, false) == EXIT_FAILURE)
             {
             perror("\"input_data->input.str_input == NULL\" while attempting to get stirng input");
             rpse_error_errorMessage("attempting to get string input");
             return EXIT_FAILURE;
             }
-    
+    	
+	printf("Please wait...\n");
         rpse_broadcast_waitUntilInterval();
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
 
         if (rpse_dll_deleteStringDLLDuplicateNodes(&head) == EXIT_SUCCESS)
             exact_match_found = rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, input_data->input.str_input);
-        /* If there was nothing received here */
         else
-            exact_match_found = false;
+            exact_match_found = false; /* If there was nothing received here */
 
         if (exact_match_found)
             printf("This username has already been taken, please try again.\n");
         else
-            printf("Great, your username will be %s!\n", input_data->input.str_input);
+            printf("\nGreat, your username will be %s!\n", input_data->input.str_input);
         
         if (head != NULL)
             rpse_dll_deleteStringDLL(&head);
     }
     while (exact_match_found);
 
-    memset(input_data->input.str_input, 0, strlen(input_data->input.str_input) + 1);
-    free(input_data->input.str_input);
-    input_data->input.str_input = NULL;
     return EXIT_SUCCESS;
 }
 
@@ -99,7 +139,7 @@ _rpse_gamemode1_userTypeMenu(user_input_data_t *input_data)
     printf("Would you like to host or join a game?\n");
     sleep(0.25);
     printf("1. Host.\n"
-           "2. Join.\n\n");
+               "2. Join.\n\n");
     
     if (rpse_io_int(input_data, false, "Select a role by it's number: ") == EXIT_FAILURE)
         {
@@ -133,7 +173,77 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
         }
     _rpse_gamemode1_getValidUsernameMenu(input_data, user_type);
     
-    /* BROADCAST USERNAME AFTER SUCCESSFUL MENU EXIT */
+    broadcast_data_t broadcast_data;
+    strncpy(broadcast_data.username, input_data->input.str_input, strlen(input_data->input.str_input) + 1);
+    
+    memset(input_data->input.str_input, 0, strlen(input_data->input.str_input) + 1);
+    free(input_data->input.str_input);
+    input_data->input.str_input = NULL;
 
+    /* Creating the message and setting up the custom move here */
+    snprintf(broadcast_data.message, input_data->buffer_size, "%s", broadcast_data.username);
+    strcat(broadcast_data.message, "@RPSe.");
+
+    char *IP_address = _rpse_gamemode1_getIPAddress();
+
+    char port[6];
+    snprintf(port, sizeof(port), "%d", BROADCAST_PORT);
+
+    move_data_t *move_data;
+    if (user_type == SERVER_USER_TYPE)
+    	{
+	    move_data = rpse_moveDef_setUpMoves(input_data);
+	    strcat(broadcast_data.message, "server/bindOn(");
+    	    strcat(broadcast_data.message, IP_address);
+	    strcat(broadcast_data.message, ")(");
+	    strcat(broadcast_data.message, port);
+	    strcat(broadcast_data.message, ")/customMove(");
+	    strcat(broadcast_data.message, move_data->move_names[3]);
+	    strcat(broadcast_data.message, ")(");
+	    for (unsigned short int index = 0; index < 3; index++)
+	    	{
+		/* This checks the 2D array's second element (the loser */
+		if (move_data->winning_combinations[index + 3][1] == 3)
+			strcat(broadcast_data.message, "f"); /* f for false, does not beat (0=rock, 1=paper, 2=scissors */
+		else
+			strcat(broadcast_data.message, "t"); /* t for true */
+		}
+	    strcat(broadcast_data.message, ")");
+	    }
+    else
+    	{
+	    move_data = NULL;
+	    strcat(broadcast_data.message, "client/invitesOn(");
+    	    strcat(broadcast_data.message, IP_address);
+	    strcat(broadcast_data.message, ")(");
+	    strcat(broadcast_data.message, port);
+	    strcat(broadcast_data.message, ")");
+	    }
+
+    free(IP_address);
+    IP_address = NULL;
+
+    printf("\nRPSe will now start searching for players on your network, this shouldn't take over 20 seconds.\n");
+    printf("If you wish to stop searching for players at any time, please press Ctrl+C.\n\n");
+
+    int ret_val = pthread_create(&broadcaster_loop_thread_ID, NULL, (void *)rpse_broadcast_broadcasterLoop, (broadcast_data_t *)&broadcast_data);
+    if (ret_val != EXIT_SUCCESS)
+	{
+	perror("\"ret_val != EXIT_SUCCESS\" while trying to start broadcaster loop\n");
+	rpse_error_errorMessage("attempting to start a thread");
+	abort();
+	}
+  /*  ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_broadcast_receiverLoop, (unsigned int *)&user_type);
+    if (ret_val != EXIT_SUCCESS)
+        {
+        perror("\"ret_val != EXIT_SUCCESS\" while trying to start receiver loop\n");
+        rpse_error_errorMessage("attempting to start a thread");
+        abort();
+        }
+*/
+    pthread_join(broadcaster_loop_thread_ID, NULL);
+    //pthread_join(receiver_loop_thread_ID, NULL);
+	
+    rpse_moveDef_freeMoveData(move_data);
     return EXIT_SUCCESS;
 }

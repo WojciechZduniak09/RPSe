@@ -52,12 +52,12 @@ Fast explanation
 #include <signal.h>
 #include <sodium.h>
 
-#define BROADCAST_PORT 51673
+
 #define RECEIVER_BUFFER_SIZE 101
 #define RECEIVER_TIMEOUT 2.0 /* seconds */
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
-#define BROADCAST_INTERVAL 10 /* seconds */
+#define BROADCAST_INTERVAL 20 /* seconds */
 #define SERVER_REGEX_CONSTANT "@RPSe\\.server\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
 #define CLIENT_REGEX_CONSTANT "@RPSe\\.client\\/invitesOn\\(0-9\\.){7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
                             "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
@@ -69,7 +69,7 @@ GLOBAL VARIABLES
 ================
 */
 
-const unsigned short int ENABLE_BROADCAST = 1;
+pthread_mutex_t termination_lock = PTHREAD_MUTEX_INITIALIZER;
 volatile sig_atomic_t broadcaster_termination_flag = 0;
 volatile sig_atomic_t receiver_termination_flag = 0;
 
@@ -132,7 +132,6 @@ INTERVAL WAITER
 void
 rpse_broadcast_waitUntilInterval(void)
 {
-    printf("Please wait...\n");
     time_t now;
     struct tm *current_time;
     unsigned short int seconds = 0;
@@ -156,12 +155,18 @@ MORE STATIC FUNCTIONS
 static void 
 _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
 {
+    pthread_mutex_lock(&termination_lock);
     if (SIGNAL == SIGUSR1)
         broadcaster_termination_flag = 1;
     else if (SIGNAL == SIGUSR2)
         receiver_termination_flag = 1;
-    else
-        return;
+    else if (SIGNAL == SIGINT)
+	{
+	printf("\nProcess aborted!\n");
+        broadcaster_termination_flag = 1;
+        receiver_termination_flag = 1;
+	}
+    pthread_mutex_unlock(&termination_lock);
 }
 
 /* Go down to around line 254 for the receiver */
@@ -171,30 +176,33 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 {
     struct sockaddr_in broadcast_addr;
 
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    int sockfd = -1;
+    for (unsigned short int attempt = 0; attempt < 3 && sockfd < 0; attempt++)
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
         {
-        perror("\"sockfd < 0\" after attempting to create it");
-        rpse_error_errorMessage("attempting to create a UDP socket");
+        perror("socket()");
+        rpse_error_errorMessage("attempting to create UDP socket");
         return EXIT_FAILURE;
         }
 
-    int reuse_addr_option = 1;
-    int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_option, sizeof(reuse_addr_option));
+    const int REUSE_ADDR_OPTION = 1;
+    int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION));
     if (ret_val < 0)
         {
         perror("\"ret_val < 0\" after attempting to make sockfd reusable");
         rpse_error_errorMessage("attempting to modify a UDP socket");
         return EXIT_FAILURE;
-        };
-
-    ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST, sizeof(ENABLE_BROADCAST));
+        }
+   
+    const int ENABLE_BROADCAST_OPTION = 1;
+    ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION));
     if (ret_val < 0)
         {
         perror("\"ret_val < 0\" after attempting to make sockfd broadcastable");
         rpse_error_errorMessage("attempting to modify a UDP socket");
         return EXIT_FAILURE;
-        };
+        }
 
     memset(&broadcast_addr, 0, sizeof(broadcast_addr));
     broadcast_addr.sin_family = AF_INET;
@@ -208,8 +216,14 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
 
     /* We add the nonce to the end of the broadcast */
-    randombytes_buf(broadcast_data->nonce, sizeof(broadcast_data->nonce));
-    char ciphertext[sizeof(broadcast_data->encrypted_message)];
+    memset(broadcast_data->nonce, 0, sizeof(broadcast_data->nonce));
+
+    unsigned char binary_nonce[NONCE_SIZE];
+    memset(binary_nonce, 0, sizeof(binary_nonce));
+    randombytes_buf(binary_nonce, sizeof(binary_nonce));
+    sodium_bin2base64(broadcast_data->nonce, sizeof(broadcast_data->nonce), binary_nonce, sizeof(binary_nonce), sodium_base64_VARIANT_ORIGINAL);
+
+    char ciphertext[sizeof(broadcast_data->encrypted_message)] = {0};
     if (crypto_stream_chacha20_xor((unsigned char *)ciphertext, (const unsigned char *)broadcast_data->message, strlen(broadcast_data->message), (const unsigned char *)broadcast_data->nonce,
                                                                (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY) != EXIT_SUCCESS)
     	{
@@ -217,18 +231,28 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 	rpse_error_errorMessage("encrypting a UDP broadcast");
 	return EXIT_FAILURE;
 	}
-    memset(broadcast_data->encrypted_message, 0, strlen(broadcast_data->encrypted_message) + 1);
-    strncpy(broadcast_data->encrypted_message, ciphertext, strlen(ciphertext) + 1);
-    strncpy(broadcast_data->encrypted_message, "/nonce=", strlen("/nonce=") + 1);
-    strncpy(broadcast_data->encrypted_message, broadcast_data->nonce, strlen(broadcast_data->nonce) + 1);
+
+    memset(broadcast_data->encrypted_message, 0, sizeof(broadcast_data->encrypted_message));
+    strcat(broadcast_data->encrypted_message, ciphertext);
+    strcat(broadcast_data->encrypted_message, "/nonce=");
+    strcat(broadcast_data->encrypted_message, broadcast_data->nonce);
 
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
+	{
         ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
                          (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
+	if (ret_val < 0)
+		{
+		perror("sendto()");
+		rpse_error_errorMessage("sending UDP broadcast");
+		return EXIT_FAILURE;
+		}
+	}
 
     free(broadcast_address);
     broadcast_address = NULL;
+    close(sockfd);
 
     return EXIT_SUCCESS;
 }
@@ -242,7 +266,7 @@ View header file for user types
 */
 
 unsigned short int
-rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int P2P_TYPE, const char *USERNAME)
+rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME)
 {
     if (head == NULL)
         {
@@ -279,12 +303,12 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
     else
         strncat(expected_pattern, USERNAME, strlen(USERNAME) + 1);
     
-    switch (P2P_TYPE)
+    switch (USER_TYPE)
         {
-        case 1:
+        case SERVER_USER_TYPE:
             strncat(expected_pattern, SERVER_REGEX_CONSTANT, strlen(SERVER_REGEX_CONSTANT) + 1);
             break;
-        case 2:
+        case CLIENT_USER_TYPE:
             strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
             break;        
         }
@@ -358,6 +382,21 @@ rpse_broadcast_receiveBroadcast(void)
     int sockfd = -1;
     for (unsigned short int attempt = 0; attempt < 3 && sockfd < 0; attempt++)
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0)
+        {
+        perror("socket()");
+        rpse_error_errorMessage("attempting to create UDP socket");
+        return NULL;
+        }
+
+    const int REUSE_ADDR_OPTION = 1;
+    int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION));
+    if (ret_val < 0)
+        {
+        perror("\"ret_val < 0\" after attempting to make sockfd reusable");
+        rpse_error_errorMessage("attempting to modify a UDP socket");
+        return NULL;
+        }
         
     if (sockfd < 0)
         {
@@ -365,16 +404,6 @@ rpse_broadcast_receiveBroadcast(void)
         rpse_error_errorMessage("attempting to create a UDP socket");
         return NULL;
         }
-
-    int reuse_addr_option = 1;
-    int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_option, sizeof(reuse_addr_option));
-    if (ret_val < 0)
-        {
-        perror("\"ret_val < 0\" after attempting to make sockfd reusable");
-        rpse_error_errorMessage("attempting to modify a UDP socket");
-        return NULL;
-        };
-    
     struct timeval socket_timeout;
     socket_timeout.tv_sec = 2; /* receiver timeout in seconds */
     socket_timeout.tv_usec = 0;
@@ -427,9 +456,7 @@ rpse_broadcast_receiveBroadcast(void)
         return NULL;
         }
     
-    printf("Searching for players on your network, please wait.\n");
-
-    string_dll_node_t *head =  NULL;
+    string_dll_node_t *head = NULL;
 
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
@@ -460,12 +487,14 @@ rpse_broadcast_receiveBroadcast(void)
         rpse_error_errorMessage("attempting to calloc() memory for a struct");
         return NULL;
         }
-    while (current_node != NULL)
+
+    while (current_node != NULL && current_broadcast_data != NULL)
         {
+    	memset(current_broadcast_data->encrypted_message, 0, sizeof(current_broadcast_data->encrypted_message));
         if (current_node->data != NULL)
             {
-            memcpy(current_broadcast_data->encrypted_message, current_node->data, sizeof(current_broadcast_data->encrypted_message) - strlen("/nonce=") - NONCE_SIZE);
-            memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, NONCE_SIZE); /* NONCE_SIZE is from header */
+            memcpy(current_broadcast_data->encrypted_message, current_node->data, sizeof(current_broadcast_data->encrypted_message) - strlen("/nonce=") - sizeof(current_broadcast_data->nonce));
+            memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, sizeof(current_broadcast_data->nonce));
             memset(current_node->data, 0, strlen(current_node->data) + 1);
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
@@ -481,7 +510,6 @@ rpse_broadcast_receiveBroadcast(void)
             current_node = NULL;
         else
             current_node = current_node->next;
-        memset(current_broadcast_data, 0, sizeof(*current_broadcast_data));
         }
 
     free(current_broadcast_data);
@@ -508,15 +536,17 @@ void *
 rpse_broadcast_broadcasterLoop(broadcast_data_t *broadcast_data)
 {
     signal(SIGUSR1, _rpse_broadcast_handleTerminationSignal);
+    signal(SIGINT, _rpse_broadcast_handleTerminationSignal);
 
-    do
+    while (broadcaster_termination_flag == 0)
         {
         rpse_broadcast_waitUntilInterval();
         _rpse_broadcast_doublePublishBroadcast(broadcast_data);
+        sleep(2);
         }
-    while (broadcaster_termination_flag == 0);
 
     signal(SIGUSR1, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
 
     pthread_exit(NULL);
     return NULL;
@@ -524,26 +554,55 @@ rpse_broadcast_broadcasterLoop(broadcast_data_t *broadcast_data)
 
 /* Should be threaded, view header for user types */
 void *
-rpse_broadcast_receiverLoop(const unsigned short int P2P_TYPE)
+rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE)
 {
     signal(SIGUSR2, _rpse_broadcast_handleTerminationSignal);
+    signal(SIGINT, _rpse_broadcast_handleTerminationSignal);
 
-    do
+    unsigned int attempt = 0;
+    while (receiver_termination_flag == 0)
         {
+	attempt++; /* Odd positioning but it's strategic */
+	printf("\n<----- Attempt %u ----->\n", attempt);
         rpse_broadcast_waitUntilInterval();
 
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
-
-        rpse_dll_deleteStringDLLDuplicateNodes(&head);
-        rpse_broadcast_verifyAndTrimDLLStructure(&head, P2P_TYPE, NULL);
-
-        rpse_dll_deleteStringDLL(&head);
-
-        /* ADD MENU HERE */
+	
+	if (head != NULL)
+	    {
+            rpse_dll_deleteStringDLLDuplicateNodes(&head);
+            rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, NULL);
+	    }
+	
+	printf("List of players found on your network:\n\n");
+	if (head == NULL || head->data == NULL)
+		{
+		printf("No players found on your WiFi network.\n\n");
+		printf("Suggestions:\n"
+		       "1. Wait a bit longer.\n"
+		       "2. Change networks and restart RPSe.\n"
+		       "3. Cancel by pressing Ctrl+C.\n"
+		       "Note: cancelling may take a while, this is expected, please be patient if so.\n\n");
+		continue;
+		}
+	else if (head->next == NULL)
+        	printf("1. %s\n", head->data);
+	else
+		{
+		string_dll_node_t *current_node = head;
+		unsigned int iteration = 0;
+		while (current_node != NULL)
+			{
+			printf("%d. %s\n", iteration + 1, current_node->data);
+			if (current_node->next == NULL)
+				current_node = NULL;
+			}
+		}
+	rpse_dll_deleteStringDLL(&head);
         }
-    while (receiver_termination_flag == 0);
 
     signal(SIGUSR2, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
 
     pthread_exit(NULL);
     return NULL;

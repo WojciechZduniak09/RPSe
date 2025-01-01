@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include  <unistd.h>
 #include <ctype.h>
 #include <pthread.h>
 #include "../include/rpsecore-error.h"
@@ -81,10 +82,11 @@ rpse_io_threadedEnterToContinue(void *arg)
 	return NULL;
 }
 
-/* String must be freed by caller */
+/* String must be freed by caller before using again and at end of code */
 unsigned short int
 rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 {
+	static bool first_time_called = true;
 	if (input_data == NULL)
 		{
 		perror("\"input_data == NULL\" while attempting to display string input prompt");
@@ -96,12 +98,7 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 	input_data->input.str_input = NULL;
 
 	for (unsigned short int attempt = 1; attempt <= 3 && input_data->input.str_input == NULL; attempt++)
-			{
-			if (input_data->input.str_input == NULL)
-				input_data->input.str_input = calloc(input_data->buffer_size, sizeof(char));
-			else
-			input_data->input.str_input = realloc(input_data->input.str_input, strlen(input_data->input.str_input) + 1);
-			}
+			input_data->input.str_input = calloc(input_data->buffer_size, sizeof(char));
 
 	if (input_data->input.str_input == NULL)
 		{
@@ -109,7 +106,8 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 		return EXIT_FAILURE;
 		}
 
-	getchar();
+	if (first_time_called)
+		getchar();
 
 	fgets(input_data->input.str_input, input_data->buffer_size, stdin);
 
@@ -118,6 +116,8 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 	for (unsigned short int attempt = 1; attempt <= 3 && input_data->input.str_input == NULL; attempt++)
 		input_data->input.str_input = realloc(input_data->input.str_input, strlen(input_data->input.str_input) + 1);
 	
+	first_time_called = false;
+
 	if (input_data->input.str_input == NULL)
 		{
 		perror("\"input_data->input.str_input == NULL\" while attempting to realloc() memory for efficiency");
@@ -210,6 +210,8 @@ rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input)
 		getchar();
 		fprintf(stderr, "Invalid input! Insert 'y' for yes or 'n' for no.\n");
 
+		fflush(stdin);
+		
 		_rpse_io_static_tabBeforeInput(insert_tab_before_input);
 		input_data->input.char_input = tolower(getchar());
 		}
