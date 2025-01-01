@@ -18,16 +18,17 @@
 /*
 Fast explanation
     - Broadcast
-        - Wait until start of a 10-second interval (00:00,:00, 00:00:10, etc.)
-        - Broadcast custum message
-        - 8 sec cooldown
-        - Broadcast until signal SIGUSR1
+        - Wait until start of a 20-second interval (00h:00min:00sec, 00h:00min:20sec, etc.)
+        - Broadcast custom message
+        - 20 sec cooldown
+        - Broadcast in a loop until signal SIGUSR1 or SIGINT or use the static function for broadcasting twice at a moment.
     - Receiver
-        - Wait until start of a 10-second interval
+        - Wait until start of a 20-second interval
         - Receive 15 messages max
         - Return messages
         - Clean duplicate messages
-        - Do not use signals as data must be processed afterwards
+        - Do not use signals as data must be processed afterwards in the receiver funtion but does
+	  in the loop just as the broadcaster
         - Must be in a separate loop
 */
 
