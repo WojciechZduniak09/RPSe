@@ -33,7 +33,7 @@ To install RPSe, you must:
   1. Download all dependencies for your Linux system
       * make (required).
       * gcc (required).
-      * openssl (required).
+      * sodium (required).
       * gdb (optional, for testing).
       * valgrind (optional, for testing).
 
