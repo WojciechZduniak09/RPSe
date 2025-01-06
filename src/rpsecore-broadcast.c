@@ -71,7 +71,6 @@ GLOBAL VARIABLES
 */
 
 pthread_mutex_t termination_lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t broadcast_lock = PTHREAD_MUTEX_INITIALIZER;
 volatile sig_atomic_t broadcaster_termination_flag = 0;
 volatile sig_atomic_t receiver_termination_flag = 0;
 
@@ -210,7 +209,6 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     strcat(broadcast_data->encrypted_message, "/nonce=");
     strcat(broadcast_data->encrypted_message, broadcast_data->nonce);
 
-    pthread_mutex_lock(&broadcast_lock);
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
 	{
@@ -223,7 +221,6 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 		return EXIT_FAILURE;
 		}
 	}
-    pthread_mutex_unlock(&broadcast_lock);
 
     free(broadcast_address);
     broadcast_address = NULL;
@@ -416,7 +413,7 @@ rpse_broadcast_receiveBroadcast(void)
 
     memset(&broadcaster_addr, 0, sizeof(broadcaster_addr));
     broadcaster_addr.sin_family = AF_INET;
-    broadcaster_addr.sin_port = htons(BROADCAST_PORT);
+    broadcaster_addr.sin_port = htons(RECEIVER_PORT);
 
     char *broadcast_address = NULL;
 
@@ -433,8 +430,6 @@ rpse_broadcast_receiveBroadcast(void)
     _rpse_broadcast_getBroadcastAddress(broadcast_address);
     broadcaster_addr.sin_addr.s_addr = inet_addr(broadcast_address);
     socklen_t receiver_sock_len = sizeof(broadcaster_addr);
-
-    pthread_mutex_lock(&broadcast_lock);
 
     ret_val = bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr));
     if (ret_val < 0)
@@ -477,8 +472,6 @@ rpse_broadcast_receiveBroadcast(void)
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
         }
-    pthread_mutex_unlock(&broadcast_lock);
-
     /* We get rid of the nonce from each of the messages and decrypt them */
     string_dll_node_t *current_node;
     if (head == NULL)

@@ -63,6 +63,7 @@ Formats
 
 #define SERVER_USER_TYPE 1
 #define CLIENT_USER_TYPE 2
+#define RECEIVER_PORT 51674
 #define BROADCAST_PORT 51673
 #define NONCE_SIZE crypto_secretbox_NONCEBYTES /* probably 24 */
 typedef struct
