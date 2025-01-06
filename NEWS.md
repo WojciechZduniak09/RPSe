@@ -6,7 +6,7 @@
 3. Removed redundant code from *rpse_io_str()* and added *first_time_called* for safety.
 4. Added thank you message at the end of the program.
 5. Removed redundant reusable part in the receiver function.
-6. Added mutexes to broadcast loop termination handler.
+6. Added mutexes to broadcast loop termination handler and broadcast publisher and receiver functions.
 7. Replaced broadcast and recevier *do-while* loops with *while* loops.
 8. Made broadcast interval be every 20 seconds for the sake of the network that'll be used.
 
@@ -19,7 +19,7 @@ RPSe is released under license GNU General Public License v3.0
 
 RPSe, a rock paper scissors game for Linux systems.
 
-Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
+Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 
 This file is part of RPSe.
 

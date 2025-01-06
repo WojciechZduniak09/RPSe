@@ -1,4 +1,4 @@
-# RPSe (Rock Paper Scissors extended) - v0.2.0-alpha.2 - Index #
+# RPSe (Rock Paper Scissors extended) - v0.3.0-alpha.3 - Index #
 1. [Copyright information and licensing](#copyright-and-licensing).
 2. [Purpose of this software](#purpose-of-this-software).
 3. [Installation guide](#installation-guide).
@@ -11,7 +11,7 @@ RPSe is released under license GNU General Public License v3.0
 
 RPSe, a rock paper scissors game for Linux systems.
 
-Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
+Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 
 This file is part of RPSe.
 

@@ -1,7 +1,7 @@
 /*
  * RPSe, a rock paper scissors game for Linux systems.
  *
- * Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
+ * Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
  *
  * This file is part of RPSe.
  *
@@ -53,7 +53,6 @@ Fast explanation
 #include <signal.h>
 #include <sodium.h>
 
-
 #define RECEIVER_BUFFER_SIZE 101
 #define RECEIVER_TIMEOUT 2.0 /* seconds */
 #define MAX_BROADCASTS 15
@@ -64,6 +63,7 @@ Fast explanation
                             "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
 #define BROADCAST_CHACHA20_ENCRYPTION_KEY "puTxV6ZLHgTSku61/e3C3hGp+chxUbrGs6+lxbBpraI=" /* It's constant as how else would users be able to know that one is a player or not? It's not like I own a central server or anything */
+
 /*
 ================
 GLOBAL VARIABLES
@@ -71,6 +71,7 @@ GLOBAL VARIABLES
 */
 
 pthread_mutex_t termination_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t broadcast_lock = PTHREAD_MUTEX_INITIALIZER;
 volatile sig_atomic_t broadcaster_termination_flag = 0;
 volatile sig_atomic_t receiver_termination_flag = 0;
 
@@ -124,35 +125,6 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
     return EXIT_SUCCESS;
 }
 
-/*
-===============
-INTERVAL WAITER
-===============
-*/
-
-void
-rpse_broadcast_waitUntilInterval(void)
-{
-    time_t now;
-    struct tm *current_time;
-    unsigned short int seconds = 0;
-
-    do
-        {
-        sleep(0.5);
-        time(&now);
-        current_time = localtime(&now);
-        seconds = current_time->tm_sec;
-        }
-    while (seconds % BROADCAST_INTERVAL != 0);
-}
-
-/*
-=====================
-MORE STATIC FUNCTIONS
-=====================
-*/
-
 static void 
 _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
 {
@@ -170,7 +142,7 @@ _rpse_broadcast_handleTerminationSignal(const int SIGNAL)
     pthread_mutex_unlock(&termination_lock);
 }
 
-/* Go down to around line 254 for the receiver */
+/* Go down to around line 373 for the receiver */
 
 static unsigned short int
 _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
@@ -238,6 +210,7 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     strcat(broadcast_data->encrypted_message, "/nonce=");
     strcat(broadcast_data->encrypted_message, broadcast_data->nonce);
 
+    pthread_mutex_lock(&broadcast_lock);
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
 	{
@@ -250,12 +223,36 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 		return EXIT_FAILURE;
 		}
 	}
+    pthread_mutex_unlock(&broadcast_lock);
 
     free(broadcast_address);
     broadcast_address = NULL;
     close(sockfd);
 
     return EXIT_SUCCESS;
+}
+
+/*
+===============
+INTERVAL WAITER
+===============
+*/
+
+void
+rpse_broadcast_waitUntilInterval(void)
+{
+    time_t now;
+    struct tm *current_time;
+    unsigned short int seconds = 0;
+
+    do
+        {
+        sleep(0.5);
+        time(&now);
+        current_time = localtime(&now);
+        seconds = current_time->tm_sec;
+        }
+    while (seconds % BROADCAST_INTERVAL != 0);
 }
 
 /* 
@@ -272,14 +269,14 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
     if (head == NULL)
         {
         perror("\"head == NULL\" while attempting to verify nodes in a string DLL");
-		rpse_error_blameDev();
+	rpse_error_blameDev();
         return EXIT_FAILURE;
         }
 
     if ((*head) == NULL)
         {
         perror("\"(*head) == NULL\" while attempting to verify nodes in a string DLL");
-		rpse_error_blameDev();
+	rpse_error_blameDev();
         return EXIT_FAILURE;
         }
 
@@ -339,7 +336,7 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
             tmp_next = tmp_current_node->next;
         
         ret_val = regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0);
-        if (ret_val != EXIT_SUCCESS)
+        if (ret_val != EXIT_SUCCESS && tmp_current_node != NULL && head != NULL)
             {
             if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
                 {
@@ -347,7 +344,7 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
                 rpse_error_errorMessage("attempting to delete a string DLL node");
                 return EXIT_FAILURE;
                 }
-            position--; /* We are now technically at the same node number */
+            position--; /* We are now technically at the same node index */
             }
 
         if (tmp_next == NULL)
@@ -437,6 +434,8 @@ rpse_broadcast_receiveBroadcast(void)
     broadcaster_addr.sin_addr.s_addr = inet_addr(broadcast_address);
     socklen_t receiver_sock_len = sizeof(broadcaster_addr);
 
+    pthread_mutex_lock(&broadcast_lock);
+
     ret_val = bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr));
     if (ret_val < 0)
         {
@@ -478,9 +477,14 @@ rpse_broadcast_receiveBroadcast(void)
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
         }
+    pthread_mutex_unlock(&broadcast_lock);
 
     /* We get rid of the nonce from each of the messages and decrypt them */
-    string_dll_node_t *current_node = head;
+    string_dll_node_t *current_node;
+    if (head == NULL)
+	    current_node = NULL;
+    else
+	    current_node = head;
     broadcast_data_t *current_broadcast_data = calloc(1, sizeof(broadcast_data_t));
     if (current_broadcast_data == NULL)
         {
@@ -563,17 +567,10 @@ rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE)
     unsigned int attempt = 0;
     while (receiver_termination_flag == 0)
         {
-	attempt++; /* Odd positioning but it's strategic */
-	printf("\n<----- Attempt %u ----->\n", attempt);
+	printf("\n<----- Attempt %u ----->\n", attempt + 1);
         rpse_broadcast_waitUntilInterval();
 
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
-	
-	if (head != NULL)
-	    {
-            rpse_dll_deleteStringDLLDuplicateNodes(&head);
-            rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, NULL);
-	    }
 	
 	printf("List of players found on your network:\n\n");
 	if (head == NULL || head->data == NULL)
@@ -583,23 +580,26 @@ rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE)
 		       "1. Wait a bit longer.\n"
 		       "2. Change networks and restart RPSe.\n"
 		       "3. Cancel by pressing Ctrl+C.\n"
-		       "Note: cancelling may take a while, this is expected, please be patient if so.\n\n");
+		       "Note: cancelling happens after the end of an attempt, this is expected, please be patient if so.\n\n");
+		attempt++;
 		continue;
 		}
 	else if (head->next == NULL)
         	printf("1. %s\n", head->data);
 	else
-		{
+	{
+            	rpse_dll_deleteStringDLLDuplicateNodes(&head);
+            	rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, NULL);
 		string_dll_node_t *current_node = head;
-		unsigned int iteration = 0;
 		while (current_node != NULL)
 			{
-			printf("%d. %s\n", iteration + 1, current_node->data);
+			printf("%d. %s\n", attempt + 1, current_node->data);
 			if (current_node->next == NULL)
 				current_node = NULL;
 			}
 		}
 	rpse_dll_deleteStringDLL(&head);
+	attempt++;
         }
 
     signal(SIGUSR2, SIG_DFL);

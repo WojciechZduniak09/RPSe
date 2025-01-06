@@ -3,7 +3,7 @@
 #
 # RPSe, a rock paper scissors game for Linux systems.
 #
-# Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
+# Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 #
 # This file is part of RPSe.
 #
@@ -19,7 +19,7 @@
 cat <<EOF >&1
 RPSe, a rock paper scissors game for Linux systems.
 
-Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
+Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 
 This file is part of RPSe.
 

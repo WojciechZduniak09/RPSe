@@ -1,7 +1,7 @@
 /*
  * RPSe, a rock paper scissors game for Linux systems.
  *
- * Copyright (C) 2024 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
+ * Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
  *
  * This file is part of RPSe.
  *
@@ -233,17 +233,18 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
 	rpse_error_errorMessage("attempting to start a thread");
 	abort();
 	}
-  /*  ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_broadcast_receiverLoop, (unsigned int *)&user_type);
+    ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_broadcast_receiverLoop, (unsigned int *)&user_type);
     if (ret_val != EXIT_SUCCESS)
         {
         perror("\"ret_val != EXIT_SUCCESS\" while trying to start receiver loop\n");
         rpse_error_errorMessage("attempting to start a thread");
         abort();
         }
-*/
+
     pthread_join(broadcaster_loop_thread_ID, NULL);
-    //pthread_join(receiver_loop_thread_ID, NULL);
-	
-    rpse_moveDef_freeMoveData(move_data);
+    pthread_join(receiver_loop_thread_ID, NULL);
+
+    move_data = NULL;
+
     return EXIT_SUCCESS;
 }
