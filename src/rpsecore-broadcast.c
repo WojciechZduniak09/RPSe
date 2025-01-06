@@ -41,6 +41,7 @@ Fast explanation
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
@@ -48,7 +49,6 @@ Fast explanation
 #include <pthread.h>
 #include <string.h>
 #include <regex.h>
-#include <sys/time.h>
 #include <time.h>
 #include <signal.h>
 #include <sodium.h>
@@ -97,14 +97,13 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
 
     for (ifa = ifaddr; ifa != NULL && !broadcast_addr_found; ifa = ifa->ifa_next)
         {
-        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET || !(strcmp(ifa->ifa_name, "lo")))
             continue;
         
         struct sockaddr_in broadcast_addr;
         broadcast_addr.sin_family = AF_INET;
         broadcast_addr.sin_addr.s_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr |
                                          ~((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
-        
         const char *RET_VAL = inet_ntop(AF_INET, &broadcast_addr.sin_addr, broadcast_addr_str, INET_ADDRSTRLEN);
         if (RET_VAL == NULL)
             continue;
