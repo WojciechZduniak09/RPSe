@@ -10,7 +10,7 @@
 7. Replaced broadcast and recevier *do-while* loops with *while* loops.
 8. Made broadcast interval be every 20 seconds for the sake of the network that'll be used.
 9. Changed receiver port to a dedicated one to avoid conflicts.
-10. Made the broadcast address get function not return the loopback oradcast address *facepalm*.
+10. Made the broadcast address get function not return the loopback broadcast address *facepalm*.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.
