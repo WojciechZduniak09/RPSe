@@ -66,16 +66,6 @@ Fast explanation
 
 /*
 ================
-GLOBAL VARIABLES
-================
-*/
-
-pthread_mutex_t termination_lock = PTHREAD_MUTEX_INITIALIZER;
-volatile sig_atomic_t broadcaster_termination_flag = 0;
-volatile sig_atomic_t receiver_termination_flag = 0;
-
-/*
-================
 STATIC FUNCTIONS
 ================
 */
@@ -123,27 +113,16 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
     return EXIT_SUCCESS;
 }
 
-static void 
-_rpse_broadcast_handleTerminationSignal(const int SIGNAL)
-{
-    pthread_mutex_lock(&termination_lock);
-    if (SIGNAL == SIGUSR1)
-        broadcaster_termination_flag = 1;
-    else if (SIGNAL == SIGUSR2)
-        receiver_termination_flag = 1;
-    else if (SIGNAL == SIGINT)
-	{
-	printf("\nProcess aborted!\n");
-        broadcaster_termination_flag = 1;
-        receiver_termination_flag = 1;
-	}
-    pthread_mutex_unlock(&termination_lock);
-}
+/* Go down to around line 348 for the receiver */
 
-/* Go down to around line 373 for the receiver */
+/*
+===========
+BROADCASTER
+===========
+*/
 
-static unsigned short int
-_rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
+unsigned short int
+rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 {
     struct sockaddr_in broadcast_addr;
 
@@ -213,6 +192,7 @@ _rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 	{
         ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
                          (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
+        sleep(0.5);
 	if (ret_val < 0)
 		{
 		perror("sendto()");
@@ -364,8 +344,6 @@ rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigne
 =================
 RECEIVER FUNCTION
 =================
-
-The broadcast function isn't in this section as it is not needed outside of this file 
 */
 
 string_dll_node_t *
@@ -460,12 +438,11 @@ rpse_broadcast_receiveBroadcast(void)
         if (received_broadcast_len < 0)
             continue;
         
-        if (strlen(current_buffer) > 1)
+        if (strlen(current_buffer) >= 1)
             current_buffer[received_broadcast_len] = '\0';
-        if (head == NULL)
+        
+	if (head == NULL && received_broadcast_len != 0)
             head = rpse_dll_createStringDLL(current_buffer);
-        if (head->data == NULL)
-            strncpy(head->data, current_buffer, strlen(current_buffer) + 1);
         else
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
@@ -520,83 +497,4 @@ rpse_broadcast_receiveBroadcast(void)
 
     close(sockfd);
     return head;
-}
-
-/*
-===================================
-BROADCASTER/RECEIVER LOOP FUNCTIONS
-===================================
-*/
-
-/* Should be threaded, view header for user types */
-void *
-rpse_broadcast_broadcasterLoop(broadcast_data_t *broadcast_data)
-{
-    signal(SIGUSR1, _rpse_broadcast_handleTerminationSignal);
-    signal(SIGINT, _rpse_broadcast_handleTerminationSignal);
-
-    while (broadcaster_termination_flag == 0)
-        {
-        rpse_broadcast_waitUntilInterval();
-        _rpse_broadcast_doublePublishBroadcast(broadcast_data);
-        sleep(2);
-        }
-
-    signal(SIGUSR1, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
-
-    pthread_exit(NULL);
-    return NULL;
-}
-
-/* Should be threaded, view header for user types */
-void *
-rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE)
-{
-    signal(SIGUSR2, _rpse_broadcast_handleTerminationSignal);
-    signal(SIGINT, _rpse_broadcast_handleTerminationSignal);
-
-    unsigned int attempt = 0;
-    while (receiver_termination_flag == 0)
-        {
-	printf("\n<----- Attempt %u ----->\n", attempt + 1);
-        rpse_broadcast_waitUntilInterval();
-
-        string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
-	
-	printf("List of players found on your network:\n\n");
-	if (head == NULL || head->data == NULL)
-		{
-		printf("No players found on your WiFi network.\n\n");
-		printf("Suggestions:\n"
-		       "1. Wait a bit longer.\n"
-		       "2. Change networks and restart RPSe.\n"
-		       "3. Cancel by pressing Ctrl+C.\n"
-		       "Note: cancelling happens after the end of an attempt, this is expected, please be patient if so.\n\n");
-		attempt++;
-		continue;
-		}
-	else if (head->next == NULL)
-        	printf("1. %s\n", head->data);
-	else
-	{
-            	rpse_dll_deleteStringDLLDuplicateNodes(&head);
-            	rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, NULL);
-		string_dll_node_t *current_node = head;
-		while (current_node != NULL)
-			{
-			printf("%d. %s\n", attempt + 1, current_node->data);
-			if (current_node->next == NULL)
-				current_node = NULL;
-			}
-		}
-	rpse_dll_deleteStringDLL(&head);
-	attempt++;
-        }
-
-    signal(SIGUSR2, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
-
-    pthread_exit(NULL);
-    return NULL;
 }

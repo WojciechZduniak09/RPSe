@@ -18,6 +18,7 @@
 #include "../include/rpsecore-gamemode1.h"
 #include "../include/rpsecore-io.h"
 #include "../include/rpsecore-broadcast.h"
+#include "../include/rpsecore-discovery.h"
 #include "../include/rpsecore-dll.h"
 #include "../include/rpsecore-error.h"
 #include "../include/rpsecore-moveDef.h"
@@ -226,14 +227,14 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     printf("\nRPSe will now start searching for players on your network, this shouldn't take over 20 seconds.\n");
     printf("If you wish to stop searching for players at any time, please press Ctrl+C.\n\n");
 
-    int ret_val = pthread_create(&broadcaster_loop_thread_ID, NULL, (void *)rpse_broadcast_broadcasterLoop, (broadcast_data_t *)&broadcast_data);
+    int ret_val = pthread_create(&broadcaster_loop_thread_ID, NULL, (void *)rpse_discovery_broadcasterLoop, (broadcast_data_t *)&broadcast_data);
     if (ret_val != EXIT_SUCCESS)
 	{
 	perror("\"ret_val != EXIT_SUCCESS\" while trying to start broadcaster loop\n");
 	rpse_error_errorMessage("attempting to start a thread");
 	abort();
 	}
-    ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_broadcast_receiverLoop, (unsigned int *)&user_type);
+    ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_discovery_receiverLoop, (unsigned int *)&user_type);
     if (ret_val != EXIT_SUCCESS)
         {
         perror("\"ret_val != EXIT_SUCCESS\" while trying to start receiver loop\n");
@@ -243,7 +244,9 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
 
     pthread_join(broadcaster_loop_thread_ID, NULL);
     pthread_join(receiver_loop_thread_ID, NULL);
-
+    
+    if (user_type == SERVER_USER_TYPE) /* Defined in *rpsecore-broadcast.h* */
+        rpse_moveDef_freeMoveData(move_data);
     move_data = NULL;
 
     return EXIT_SUCCESS;

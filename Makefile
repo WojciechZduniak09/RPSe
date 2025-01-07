@@ -30,6 +30,10 @@ bin/objects/rpsecore-broadcast.o: src/rpsecore-broadcast.c include/rpsecore-broa
 	@echo "${GREEN_FG}Compiling rpsecore-broadcast...${RESET}"	
 	$(COMPILER) $(CFLAGS) -c $< -o $@ -lsodium
 
+bin/objects/rpsecore-discovery.o: src/rpsecore-discovery.c include/rpsecore-discovery.h
+	@echo "${GREEN_FG}Compiling rpsecore-discovery...${RESET}"
+	$(COMPILER) $(CFLAGS) -c $< -o $@
+
 bin/objects/rpsecore-dll.o: src/rpsecore-dll.c include/rpsecore-dll.h
 	@echo "${GREEN_FG}Compiling rpsecore-dll...${RESET}"	
 	$(COMPILER) $(CFLAGS) -c $< -o $@
@@ -72,7 +76,7 @@ bin/RPSe: bin/objects/main.o bin/objects/rpsecore-broadcast.o bin/objects/rpseco
 		  bin/objects/rpsecore-error.o bin/objects/rpsecore-gamemode1.o \
 		  bin/objects/rpsecore-gamemode2.o bin/objects/rpsecore-sharedGamemodeMenus.o \
 		  bin/objects/rpsecore-io.o bin/objects/rpsecore-moveDef.o \
-		  bin/objects/rpsecore-roundCalc.o -lsodium
+		  bin/objects/rpsecore-roundCalc.o bin/objects/rpsecore-discovery.o -lsodium
 	@echo "${GREEN_FG}Compiling RPSe...${RESET}"	
 	$(COMPILER) $(CFLAGS) $^ -o $@
 	@echo "${GREEN_FG}Compilation finished!${RESET}"

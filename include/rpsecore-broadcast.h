@@ -77,7 +77,6 @@ typedef struct
 void rpse_broadcast_waitUntilInterval(void);
 unsigned short int rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME);
 string_dll_node_t * rpse_broadcast_receiveBroadcast(void);
-void * rpse_broadcast_broadcasterLoop(broadcast_data_t *broadcast_data);
-void * rpse_broadcast_receiverLoop(const unsigned short int USER_TYPE);
+unsigned short int rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data);
 
 #endif

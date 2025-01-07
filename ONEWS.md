@@ -1,5 +1,17 @@
 # RPSe development news archive #
 
+## v0.3.0-alpha.3 ##
+1. Added found players at the end of *rpse_broadcast_receiverLoop()*
+2. Added *user type* macros in *rpsecore-broadcast.h* and added any other externally-used ones there, too.
+3. Removed redundant code from *rpse_io_str()* and added *first_time_called* for safety.
+4. Added thank you message at the end of the program.
+5. Removed redundant reusable part in the receiver function.
+6. Added mutexes to broadcast loop termination handler.
+7. Replaced broadcast and recevier *do-while* loops with *while* loops.
+8. Made broadcast interval be every 20 seconds for the sake of the network that'll be used.
+9. Changed receiver port to a dedicated one to avoid conflicts.
+10. Made the broadcast address get function not return the loopback broadcast address *facepalm*.
+
 ## v0.2.0-alpha.2 ##
 1. Added contact information for Wojciech Zduniak.
 2. Added GPLv3 logo to *README.md*.
