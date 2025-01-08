@@ -65,6 +65,15 @@ Fast explanation
 #define BROADCAST_CHACHA20_ENCRYPTION_KEY "puTxV6ZLHgTSku61/e3C3hGp+chxUbrGs6+lxbBpraI=" /* It's constant as how else would users be able to know that one is a player or not? It's not like I own a central server or anything */
 
 /*
+=================
+GLOBAL VARIABLES
+=================
+*/
+
+const int ENABLE_BROADCAST_OPTION = 1;
+const int REUSE_ADDR_OPTION = 1;
+
+/*
 ================
 STATIC FUNCTIONS
 ================
@@ -87,7 +96,7 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
 
     for (ifa = ifaddr; ifa != NULL && !broadcast_addr_found; ifa = ifa->ifa_next)
         {
-        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET || !(strcmp(ifa->ifa_name, "lo")))
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET || (strcmp(ifa->ifa_name, "lo") == 0))
             continue;
         
         struct sockaddr_in broadcast_addr;
@@ -135,8 +144,7 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
         rpse_error_errorMessage("attempting to create UDP socket");
         return EXIT_FAILURE;
         }
-
-    const int REUSE_ADDR_OPTION = 1;
+    
     int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION));
     if (ret_val < 0)
         {
@@ -145,7 +153,6 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
         return EXIT_FAILURE;
         }
    
-    const int ENABLE_BROADCAST_OPTION = 1;
     ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION));
     if (ret_val < 0)
         {
@@ -192,13 +199,13 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 	{
         ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
                          (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
-        sleep(0.5);
 	if (ret_val < 0)
 		{
 		perror("sendto()");
 		rpse_error_errorMessage("sending UDP broadcast");
 		return EXIT_FAILURE;
 		}
+	sleep(0.5);
 	}
 
     free(broadcast_address);
@@ -361,11 +368,18 @@ rpse_broadcast_receiveBroadcast(void)
         return NULL;
         }
 
-    const int REUSE_ADDR_OPTION = 1;
     int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION));
     if (ret_val < 0)
         {
         perror("\"ret_val < 0\" after attempting to make sockfd reusable");
+        rpse_error_errorMessage("attempting to modify a UDP socket");
+        return NULL;
+        }
+
+    ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION));
+    if (ret_val < 0)
+        {
+        perror("\"ret_val < 0\" after attempting to make sockfd broadcastable");
         rpse_error_errorMessage("attempting to modify a UDP socket");
         return NULL;
         }
@@ -430,20 +444,19 @@ rpse_broadcast_receiveBroadcast(void)
     
     string_dll_node_t *head = NULL;
 
+    /* Core part here */
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
         
-        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0,
-                                              (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
+        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
         if (received_broadcast_len < 0)
             continue;
         
-        if (strlen(current_buffer) >= 1)
-            current_buffer[received_broadcast_len] = '\0';
+        current_buffer[received_broadcast_len] = '\0';
         
-	if (head == NULL && received_broadcast_len != 0)
+	    if (head == NULL && received_broadcast_len != 0)
             head = rpse_dll_createStringDLL(current_buffer);
-        else
+        else if (received_broadcast_len != 0)
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
