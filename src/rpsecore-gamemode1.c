@@ -22,6 +22,7 @@
 #include "../include/rpsecore-dll.h"
 #include "../include/rpsecore-error.h"
 #include "../include/rpsecore-moveDef.h"
+#include <regex.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -104,10 +105,50 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
         rpse_broadcast_waitUntilInterval();
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
 
-        if (rpse_dll_deleteStringDLLDuplicateNodes(&head) == EXIT_SUCCESS)
-            exact_match_found = rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, input_data->input.str_input);
-        else
-            exact_match_found = false; /* If there was nothing received here */
+        if (rpse_dll_deleteStringDLLDuplicateNodes(&head) == EXIT_FAILURE)
+		return EXIT_FAILURE;
+	if (rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, input_data->input.str_input) == EXIT_FAILURE)
+		return EXIT_FAILURE;
+	
+	regex_t verification_regex;
+	char pattern[36];
+	strcat(pattern, input_data->input.str_input);
+	strcat(pattern, "@RPSe");
+	int ret_val = regcomp(&verification_regex, (const char *)&pattern, REG_EXTENDED);
+	if (ret_val)
+		{
+		perror("Unable to compile regex.");
+		rpse_error_errorMessage("attempting to compile a regular expression");
+		return EXIT_FAILURE;
+		}
+	
+	if (head == NULL)
+		exact_match_found = true;
+	else
+		{
+		string_dll_node_t *current_node = head;
+		while (current_node == NULL)
+			{
+			ret_val = regexec(&verification_regex, current_node->data, 0, NULL, 0);
+			if (!ret_val)
+				{
+				exact_match_found = true;
+				current_node = NULL;
+				continue;
+				}
+			else if (ret_val != REG_NOMATCH)
+				{
+				/* In case of failure */
+				perror("Unable to execute a regex");
+				rpse_error_errorMessage("attempting to regexec()");
+				return EXIT_FAILURE;
+				}
+			if (current_node->next == NULL)
+				current_node = NULL;
+			else
+				current_node = current_node->next;
+			}
+		}
 
         if (exact_match_found)
             printf("This username has already been taken, please try again.\n");

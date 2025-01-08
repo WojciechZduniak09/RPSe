@@ -429,8 +429,6 @@ rpse_broadcast_receiveBroadcast(void)
         return NULL;
         }
 
-    time_t start = time(NULL);
-
     char *current_buffer = NULL;
     for (unsigned short int attempt = 0; attempt < 3 && current_buffer == NULL; attempt++)
         current_buffer = calloc(RECEIVER_BUFFER_SIZE, sizeof(char));
@@ -444,6 +442,7 @@ rpse_broadcast_receiveBroadcast(void)
     
     string_dll_node_t *head = NULL;
 
+    time_t start = time(NULL);
     /* Core part here */
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {

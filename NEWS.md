@@ -4,6 +4,7 @@
 1. Moved broadcast and recevier loops to *rpsecore-discovery*.
 2. Made *broadcast_data* free after use in *rpsecore-gamemode1.c*.
 3. Added delay to broadcaster to make the message always be visible regardless of device.
+4. Fixed *_rpse_broadcast_getBroadcastAddress()*.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.
