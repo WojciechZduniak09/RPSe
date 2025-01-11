@@ -1,4 +1,4 @@
-# RPSe (Rock Paper Scissors extended) - v0.3.0-alpha.3 - Index #
+# RPSe (Rock Paper Scissors extended) - v0.4.0-alpha.4 - Index #
 1. [Copyright information and licensing](#copyright-and-licensing).
 2. [Purpose of this software](#purpose-of-this-software).
 3. [Installation guide](#installation-guide).
@@ -13,8 +13,6 @@ RPSe, a rock paper scissors game for Linux systems.
 
 Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 
-This file is part of RPSe.
-
 RPSe is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 RPSe is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -24,7 +22,6 @@ You should have received a copy of the GNU General Public License along with RPS
 ## Purpose of this software ##
   * This is rock paper scissors but with an extra move to play with. Basically, you can play either rock, paper, scissors or x, which you can fully customise (by a name and custom properties).
   * PvE is only available at this time.
-  * Current version: v0.3.0-alpha.3 (I don't know when I'm releasing this one).
   * This software is being made for educational purposes to learn C lang.
   * Development schedules are very unstable, so updates will probably be spaced out by a long time.
 

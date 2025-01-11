@@ -38,21 +38,32 @@ STATIC FUNCTIONS
 */
 
 static void 
-_rpse_discovery_handleTerminationSignal(const int SIGNAL)
+_rpse_discovery_handleInternalTerminationSignal(const int SIGNAL)
 {
-    pthread_mutex_lock(&termination_lock);
+    if (SIGNAL == SIGUSR1 || SIGNAL == SIGUSR2)
+	pthread_mutex_lock(&termination_lock);
+    else
+	return;
+
     if (SIGNAL == SIGUSR1)
         broadcaster_termination_flag = 1;
     else if (SIGNAL == SIGUSR2)
         receiver_termination_flag = 1;
-    else if (SIGNAL == SIGINT)
-	{
-	printf("\nProcess aborted!\n");
-        broadcaster_termination_flag = 1;
-        receiver_termination_flag = 1;
-	}
+
     pthread_mutex_unlock(&termination_lock);
 }
+
+static void
+_rpse_discovery_handleUserTerminationSignal(const int SIGNAL)
+{
+	if (SIGNAL == SIGINT)
+		{
+		printf("\nProcess aborted!\n");
+		_rpse_discovery_handleInternalTerminationSignal(SIGUSR1);
+		_rpse_discovery_handleInternalTerminationSignal(SIGUSR2);
+		}
+}
+
 /*
 ===================================
 BROADCASTER/RECEIVER LOOP FUNCTIONS
@@ -63,13 +74,21 @@ BROADCASTER/RECEIVER LOOP FUNCTIONS
 void *
 rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
 {
-    signal(SIGUSR1, _rpse_discovery_handleTerminationSignal);
-    signal(SIGINT, _rpse_discovery_handleTerminationSignal);
+    if (broadcast_data == NULL)
+	{
+	perror("broadcast_data == NULL in broadcaster loop");
+	pthread_exit(NULL);
+	return NULL;
+	}
+
+    signal(SIGUSR1, _rpse_discovery_handleInternalTerminationSignal);
+    signal(SIGINT, _rpse_discovery_handleUserTerminationSignal);
 
     while (broadcaster_termination_flag == 0)
         {
         rpse_broadcast_waitUntilInterval();
         rpse_broadcast_doublePublishBroadcast(broadcast_data);
+	perror("rpse_broadcast_doublePublishBroadcast(broadcaster)");
         sleep(2);
         }
 
@@ -82,18 +101,33 @@ rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
 
 /* Should be threaded, view broadcast header for user types */
 void *
-rpse_discovery_receiverLoop(const unsigned short int USER_TYPE)
+rpse_discovery_receiverLoop(const broadcast_data_t *BROADCAST_DATA)
 {
-    signal(SIGUSR2, _rpse_discovery_handleTerminationSignal);
-    signal(SIGINT, _rpse_discovery_handleTerminationSignal);
+    if (BROADCAST_DATA == NULL)
+        {
+	perror("broadcast data is null in receiver loop");
+	pthread_exit(NULL);
+        return NULL;
+	}
+    else if (BROADCAST_DATA->user_type != SERVER_USER_TYPE && BROADCAST_DATA->user_type != CLIENT_USER_TYPE)
+	{
+	perror("broadcast user type invalid in receiver loop");
+	pthread_exit(NULL);
+	return NULL;
+	}
+    
+    signal(SIGUSR2, _rpse_discovery_handleInternalTerminationSignal);
+    signal(SIGINT, _rpse_discovery_handleUserTerminationSignal);
 
     unsigned int attempt = 0;
     while (receiver_termination_flag == 0)
         {
 	printf("\n<----- Attempt %u ----->\n", attempt + 1);
-        rpse_broadcast_waitUntilInterval();
-
-        string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
+        
+	rpse_broadcast_waitUntilInterval();
+	perror("rpse_broadcast_waitUntilInterval(receiver)");
+        string_dll_node_t *head = rpse_broadcast_receiveBroadcast(BROADCAST_DATA);
+	perror("rpse_broadcast_receiveBroadcast()");
 	
 	printf("List of players found on your network:\n\n");
 	if (head == NULL || head->data == NULL)
@@ -110,9 +144,7 @@ rpse_discovery_receiverLoop(const unsigned short int USER_TYPE)
 	else if (head->next == NULL)
         	printf("1. %s\n", head->data);
 	else
-	{
-            	rpse_dll_deleteStringDLLDuplicateNodes(&head);
-            	rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, NULL);
+		{
 		string_dll_node_t *current_node = head;
 		unsigned int player_number = 1;
 		while (current_node != NULL)

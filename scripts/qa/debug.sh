@@ -50,13 +50,14 @@ fi
 cd bin/
 
 # Requesting input.
-while ! [[ $SETTING =~ ^[1-5]$ ]]; do
+while ! [[ $SETTING =~ ^[1-6]$ ]]; do
 	echo "Here are the available test options:"
 	echo "    1. Test with Valgrind."
 	echo "    2. Test with GDB."
 	echo "    3. Time execution."
-	echo "    4. Run without testing tools."
-	echo "    5. Do not run/test."
+	echo "    4. Run with DRD."
+	echo "    5. Run without testing tools."
+	echo "    6. Do not run/test."
 	read -p "Select your option's number here: " SETTING
 done
 
@@ -74,6 +75,10 @@ elif [ $SETTING -eq 3 ]; then
 	time ./RPSe
 
 elif [ $SETTING -eq 4 ]; then
+	echo "${GREEN_FG}DRD testing has been selected${RESET}"
+	valgrind --tool=drd ./RPSe
+
+elif [ $SETTING -eq 5 ]; then
 	echo "${GREEN_FG}Regular execution has been selected${RESET}"
 	./RPSe
 

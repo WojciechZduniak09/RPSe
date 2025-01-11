@@ -82,8 +82,8 @@ rpse_dll_createStringDLL(const char *DATA)
 
     string_dll_node_t *new_node = NULL;
 
-	for (unsigned short int attempt = 0; attempt < 3 && new_node == NULL; attempt++)
-		new_node = calloc(1, sizeof(string_dll_node_t));
+    for (unsigned short int attempt = 0; attempt < 3 && new_node == NULL; attempt++)
+        new_node = calloc(1, sizeof(string_dll_node_t));
 
     if (new_node == NULL)
 		{
@@ -92,24 +92,25 @@ rpse_dll_createStringDLL(const char *DATA)
 		return NULL;
 		}
 
+       
     new_node->prev = NULL;
 
-	const size_t NCHAR = strlen(DATA) + 1;
-	new_node->data = NULL;
+    const size_t NCHAR = strlen(DATA) + 1;
+    new_node->data = NULL;
 
-	for (unsigned short int attempt = 0; attempt < 3 && new_node->data == NULL; attempt++)
-		new_node->data = calloc(NCHAR, sizeof(char));
+    for (unsigned short int attempt = 0; attempt < 3 && new_node->data == NULL; attempt++)
+        new_node->data = calloc(NCHAR, sizeof(char));
 
-	if (new_node->data == NULL)
-		{
-		perror("\"new_node->data == NULL\" while attempting to calloc() memory for it");
-		rpse_error_errorMessage("attempting to calloc() memory for a doubly linked list node's data");
-		return NULL;
-		}
+    if (new_node->data == NULL)
+        {
+        perror("\"new_node->data == NULL\" while attempting to calloc() memory for it");
+	rpse_error_errorMessage("attempting to calloc() memory for a doubly linked list node's data");
+	return NULL;
+	}
 	
     strncpy(new_node->data, DATA, strlen(DATA)+1);
     
-	new_node->next = NULL;
+    new_node->next = NULL;
 
     return new_node;
 }
@@ -290,24 +291,19 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 					current_head_dll_element_num++;
 					element_deleted = false;
 					}
-				
-				current_auxiliary_dll_node = current_auxiliary_dll_node->next;
+				if (current_auxiliary_dll_node->next == NULL)
+				    	{
+					if (rpse_dll_deleteStringDLL(&current_auxiliary_dll_node) == EXIT_FAILURE)
+						{
+						perror("Failure while attempting to delete current_auxiliary_dll_node");
+						return EXIT_FAILURE;
+						}
+					current_auxiliary_dll_node = NULL;
+					}
+				else
+					current_auxiliary_dll_node = current_auxiliary_dll_node->next;
 				}
 			}
-
-		if (element_deleted)
-			{
-			current_head_dll_element_num++;
-			element_deleted = false;
-			}
-		
-		current_head_dll_node = current_head_dll_node->next;
-		}
-
-	if (rpse_dll_deleteStringDLL(&current_auxiliary_dll_node) == EXIT_FAILURE)
-		{
-		perror("Failure while attempting to delete \"current_auxiliary_dll_node\"");
-		return EXIT_FAILURE;
 		}
 
 	return EXIT_SUCCESS;
@@ -343,13 +339,13 @@ rpse_dll_deleteStringDLL(string_dll_node_t **head)
 		free((*head));
 		(*head) = NULL;
 		return EXIT_SUCCESS;
-		}	
+		}
+
 	string_dll_node_t *current_node = (*head);
 	string_dll_node_t *next_node = NULL;
 	
 	while (current_node != NULL)
 		{
-		
 		next_node = current_node->next;
 		free(current_node->data);
 		current_node->data = NULL;

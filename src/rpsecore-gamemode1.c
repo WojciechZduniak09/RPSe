@@ -88,32 +88,49 @@ static unsigned short int
 _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsigned short int USER_TYPE)
 {
     bool exact_match_found = false;
+    bool username_is_valid = false;
+    input_data->buffer_size = 31;
     do
         {
-        printf("Create a username for your player (30 character limit): ");
-
-        input_data->buffer_size = 31;
-
-        if (rpse_io_str(input_data, false) == EXIT_FAILURE)
+	while (!username_is_valid)
             {
-            perror("\"input_data->input.str_input == NULL\" while attempting to get stirng input");
-            rpse_error_errorMessage("attempting to get string input");
-            return EXIT_FAILURE;
-            }
-    	
-	printf("Please wait...\n");
-        rpse_broadcast_waitUntilInterval();
-        string_dll_node_t *head = rpse_broadcast_receiveBroadcast();
+            printf("Create a username for your player (30 character limit, no @ symbols allowed): ");
 
-        if (rpse_dll_deleteStringDLLDuplicateNodes(&head) == EXIT_FAILURE)
-		return EXIT_FAILURE;
-	if (rpse_broadcast_verifyAndTrimDLLStructure(&head, USER_TYPE, input_data->input.str_input) == EXIT_FAILURE)
-		return EXIT_FAILURE;
-	
+                if (rpse_io_str(input_data, false) == EXIT_FAILURE)
+            	    {
+            	    perror("\"input_data->input.str_input == NULL\" while attempting to get stirng input");
+                    rpse_error_errorMessage("attempting to get string input");
+                    return EXIT_FAILURE;
+                    }
+    	    unsigned int username_len = strlen(input_data->input.str_input) + 1;
+	    unsigned int current_character_index = 0;
+	    int current_character;
+	    do
+	        {
+                current_character = input_data->input.str_input[current_character_index];
+	        if (current_character == '@')
+	            {
+		    printf("Invalid input! No \"@\" symbols are allowed!\n");
+		    username_is_valid = false;
+		    break;
+		    }
+		else
+		    username_is_valid = true;
+		current_character_index++;
+		}
+	    while (current_character_index < username_len);
+	    }
+	printf("Please wait...\n");
+        broadcast_data_t tmp_broadcast_data;
+	tmp_broadcast_data.user_type = USER_TYPE;
+	strncpy(tmp_broadcast_data.username, input_data->input.str_input, strlen(input_data->input.str_input) + 1);
+	rpse_broadcast_waitUntilInterval();
+        string_dll_node_t *head = rpse_broadcast_receiveBroadcast(&tmp_broadcast_data);
+
 	regex_t verification_regex;
-	char pattern[36];
-	strcat(pattern, input_data->input.str_input);
-	strcat(pattern, "@RPSe");
+	char pattern[36] = "";
+	strncat(pattern, input_data->input.str_input, 31);
+	strncat(pattern, "@RPSe", 6);
 	int ret_val = regcomp(&verification_regex, (const char *)&pattern, REG_EXTENDED);
 	if (ret_val)
 		{
@@ -123,7 +140,7 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 		}
 	
 	if (head == NULL)
-		exact_match_found = true;
+		exact_match_found = false;
 	else
 		{
 		string_dll_node_t *current_node = head;
@@ -149,6 +166,7 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 				current_node = current_node->next;
 			}
 		}
+	regfree(&verification_regex);
 
         if (exact_match_found)
             printf("This username has already been taken, please try again.\n");
@@ -168,10 +186,10 @@ static short int
 _rpse_gamemode1_userTypeMenu(user_input_data_t *input_data)
 {
     if (input_data == NULL)
-		{
-		perror("\"input_data == NULL\" while attempting to display player menu");
-		return -1;
-		}
+	{
+	perror("\"input_data == NULL\" while attempting to display player menu");
+	return -1;
+	}
     
     printf("<---- Player menu ---->\n");
 
@@ -181,12 +199,12 @@ _rpse_gamemode1_userTypeMenu(user_input_data_t *input_data)
     printf("Would you like to host or join a game?\n");
     sleep(0.25);
     printf("1. Host.\n"
-               "2. Join.\n\n");
+           "2. Join.\n\n");
     
     if (rpse_io_int(input_data, false, "Select a role by it's number: ") == EXIT_FAILURE)
         {
         perror("Failure while attempting to get int input");
-        return EXIT_FAILURE;
+        return 3; /* 3 is the failure code here, i cant be bothered to explain why lol */
         }
     
     if (input_data->input.int_input == 1)
@@ -207,15 +225,16 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     printf("This gamemode is still a work in progress, please try again in a future update.\n");
     printf("Here is a sneak peek:\n\n");
     sleep(1);
-    int user_type = _rpse_gamemode1_userTypeMenu(input_data);
-    if (user_type == -1)
+    
+    broadcast_data_t broadcast_data;
+    broadcast_data.user_type = _rpse_gamemode1_userTypeMenu(input_data);
+    if (broadcast_data.user_type == 3)
         {
         perror("Failure while getting user type");
         return EXIT_FAILURE;
         }
-    _rpse_gamemode1_getValidUsernameMenu(input_data, user_type);
-    
-    broadcast_data_t broadcast_data;
+
+    _rpse_gamemode1_getValidUsernameMenu(input_data, broadcast_data.user_type);
     strncpy(broadcast_data.username, input_data->input.str_input, strlen(input_data->input.str_input) + 1);
     
     memset(input_data->input.str_input, 0, strlen(input_data->input.str_input) + 1);
@@ -229,10 +248,10 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     char *IP_address = _rpse_gamemode1_getIPAddress();
 
     char port[6];
-    snprintf(port, sizeof(port), "%d", BROADCAST_PORT);
+    snprintf(port, sizeof(port), "%d", BROADCASTER_PORT);
 
     move_data_t *move_data;
-    if (user_type == SERVER_USER_TYPE)
+    if (broadcast_data.user_type == SERVER_USER_TYPE)
     	{
 	    move_data = rpse_moveDef_setUpMoves(input_data);
 	    strcat(broadcast_data.message, "server/bindOn(");
@@ -275,7 +294,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
 	rpse_error_errorMessage("attempting to start a thread");
 	abort();
 	}
-    ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_discovery_receiverLoop, (unsigned int *)&user_type);
+    ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_discovery_receiverLoop, (broadcast_data_t *)&broadcast_data);
     if (ret_val != EXIT_SUCCESS)
         {
         perror("\"ret_val != EXIT_SUCCESS\" while trying to start receiver loop\n");
@@ -286,7 +305,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     pthread_join(broadcaster_loop_thread_ID, NULL);
     pthread_join(receiver_loop_thread_ID, NULL);
     
-    if (user_type == SERVER_USER_TYPE) /* Defined in *rpsecore-broadcast.h* */
+    if (broadcast_data.user_type == SERVER_USER_TYPE) /* Defined in *rpsecore-broadcast.h* */
         rpse_moveDef_freeMoveData(move_data);
     move_data = NULL;
 

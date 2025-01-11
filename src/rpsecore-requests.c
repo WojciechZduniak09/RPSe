@@ -14,13 +14,3 @@
  * You should have received a copy of the GNU General Public License along with RPSe.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef RPSECORE_DISCOVERY_H
-#define RPSECORE_DISCOVERY_H
-
-#include "rpsecore-broadcast.h"
-
-void * rpse_discovery_broadcasterLoop(void);
-void * rpse_discovery_receiverLoop(const broadcast_data_t *BROADCAST_DATA);
-
-#endif

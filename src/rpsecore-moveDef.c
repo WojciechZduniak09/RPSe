@@ -166,18 +166,38 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 		for (unsigned short int move_index = 0; move_index < 2; move_index++)
 			new_move_data->winning_combinations[move_array_index][move_index] = STD_MOVE_COMBINATIONS[move_array_index][move_index];
 		}
-	
-	/* Setting up custom move - 30 character limit is due to the UDP broadcast aspect only*/
-	printf("[1/4] What should your custom move be named? (30 character limit)\n");
-	input_data->buffer_size = 30;
+	bool move_name_is_valid = false;
+	unsigned short int name_size;
+	while (!move_name_is_valid)
+	    {
+	    /* Setting up custom move - the limitations are due to the UDP broadcast aspect only */
+	    printf("[1/4] What should your custom move be named? (30 character limit and no parentheses allowed)\n");
+	    input_data->buffer_size = 31;
 
-	if (rpse_io_str(input_data, true) == EXIT_FAILURE)
-		{
-		perror("Failure while attempting to get string input");
-		return NULL;
+	    if (rpse_io_str(input_data, true) == EXIT_FAILURE)
+	       	    {
+		    perror("Failure while attempting to get string input");
+		    return NULL;
+		    }
+
+	    name_size = strlen(input_data->input.str_input) + 1;
+	    unsigned short int current_character_index = 0;
+	    char current_character;
+	    do
+	        {
+	        current_character = input_data->input.str_input[current_character_index];
+	        if (current_character == '(' || current_character == ')')
+			{
+			printf("Invalid name! You must not include the symbols \"(\" and \")\".\n");
+			move_name_is_valid = false;
+			break;
+			}
+		else
+			move_name_is_valid = true;
+		current_character_index++;
 		}
-
-	unsigned short int name_size = strlen(input_data->input.str_input) + 1;
+	    while (current_character_index < name_size);
+	    }
 
 	for (unsigned short int attempt = 1; attempt <= 3 && new_move_data->move_names[3] == NULL; attempt++)
 		new_move_data->move_names[3] = calloc(name_size, sizeof(char));

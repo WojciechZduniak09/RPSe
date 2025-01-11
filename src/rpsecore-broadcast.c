@@ -58,9 +58,9 @@ Fast explanation
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
 #define BROADCAST_INTERVAL 20 /* seconds */
-#define SERVER_REGEX_CONSTANT "@RPSe\\.server\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
-#define CLIENT_REGEX_CONSTANT "@RPSe\\.client\\/invitesOn\\(0-9\\.){7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
-                            "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
+#define CLIENT_REGEX_CONSTANT "@RPSe\\.server\\/invitesOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
+#define SERVER_REGEX_CONSTANT "@RPSe\\.client\\/bindOn\\(\\[0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
+                                                                   "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
 #define BROADCAST_CHACHA20_ENCRYPTION_KEY "puTxV6ZLHgTSku61/e3C3hGp+chxUbrGs6+lxbBpraI=" /* It's constant as how else would users be able to know that one is a player or not? It's not like I own a central server or anything */
 
@@ -72,6 +72,7 @@ GLOBAL VARIABLES
 
 const int ENABLE_BROADCAST_OPTION = 1;
 const int REUSE_ADDR_OPTION = 1;
+pthread_mutex_t clock_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
 ================
@@ -122,6 +123,104 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
     return EXIT_SUCCESS;
 }
 
+/* View header for user types */
+static unsigned short int
+_rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME)
+{
+    if (head == NULL)
+        {
+        perror("\"head == NULL\" while attempting to verify nodes in a string dll");
+	rpse_error_blameDev();
+        return EXIT_FAILURE;
+        }
+
+    if ((*head) == NULL)
+        {
+        perror("\"(*head) == NULL\" while attempting to verify nodes in a string dll");
+	rpse_error_blameDev();
+        return EXIT_FAILURE;
+        }
+
+    regex_t compiled_regex;
+
+    char *expected_pattern = NULL;
+    for (unsigned short int attempt = 0; attempt < 3 && expected_pattern == NULL; attempt++)
+        expected_pattern = calloc(strlen((USER_TYPE == CLIENT_USER_TYPE) ? CLIENT_REGEX_CONSTANT : SERVER_REGEX_CONSTANT) + strlen(USERNAME) + 1, sizeof(char));
+    
+    if (expected_pattern == NULL)
+        {
+        perror("\"expected_pattern == NULL\" while attempting to calloc() memory for it.");
+        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        return EXIT_FAILURE;
+        }
+
+    if (USERNAME == NULL)
+        strncat(expected_pattern, "^[a-za-z0-9]{1,30}", strlen("^[a-za-z0-9]{1,30}") + 1);
+    else
+        strncat(expected_pattern, USERNAME, strlen(USERNAME) + 1);
+    
+    switch (USER_TYPE)
+        {
+        case SERVER_USER_TYPE:
+            strncat(expected_pattern, SERVER_REGEX_CONSTANT, strlen(SERVER_REGEX_CONSTANT) + 1);
+            break;
+        case CLIENT_USER_TYPE:
+            strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
+            break;        
+        }
+    int ret_val = regcomp(&compiled_regex, expected_pattern, REG_EXTENDED);
+
+    if (ret_val != EXIT_SUCCESS) 
+        {
+        rpse_error_blameDev();
+        return EXIT_FAILURE;
+        }
+
+    string_dll_node_t *tmp_next;
+    string_dll_node_t *tmp_current_node = (*head);
+
+    const unsigned int total_initial_nodes = rpse_dll_getStringDLLNodeCount(&tmp_current_node);
+
+    for (
+        unsigned int position = 1;
+        position <= total_initial_nodes && tmp_current_node != NULL;
+        position++
+        )
+        {
+        if (tmp_current_node->next == NULL)
+            tmp_next = NULL;
+        else
+            tmp_next = tmp_current_node->next;
+        
+        ret_val = regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0);
+        if (ret_val != EXIT_SUCCESS && tmp_current_node != NULL && head != NULL)
+            {
+            if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
+                {
+                perror("error while attempting to delete a string dll node");
+                rpse_error_errorMessage("attempting to delete a string dll node");
+                return EXIT_FAILURE;
+                }
+            position--; /* we are now technically at the same node index */
+            }
+
+        if (tmp_next == NULL)
+                tmp_current_node = NULL;
+        else
+            tmp_current_node = tmp_next;   
+        }
+
+    tmp_next = NULL;
+    tmp_current_node = NULL;
+
+    free(expected_pattern);
+    expected_pattern = NULL;
+
+    regfree(&compiled_regex);
+
+    return EXIT_SUCCESS;
+}
+
 /* Go down to around line 348 for the receiver */
 
 /*
@@ -163,7 +262,7 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 
     memset(&broadcast_addr, 0, sizeof(broadcast_addr));
     broadcast_addr.sin_family = AF_INET;
-    broadcast_addr.sin_port = htons(BROADCAST_PORT);
+    broadcast_addr.sin_port = htons((unsigned short int)BROADCASTER_PORT);
     char *broadcast_address = calloc(1, INET_ADDRSTRLEN);
     if (_rpse_broadcast_getBroadcastAddress(broadcast_address) == EXIT_FAILURE)
         {
@@ -224,127 +323,25 @@ INTERVAL WAITER
 void
 rpse_broadcast_waitUntilInterval(void)
 {
+    time_t start_time = time(NULL);
     time_t now;
     struct tm *current_time;
     unsigned short int seconds = 0;
 
     do
         {
-        sleep(0.5);
+	pthread_mutex_lock(&clock_lock);
         time(&now);
         current_time = localtime(&now);
         seconds = current_time->tm_sec;
+	pthread_mutex_unlock(&clock_lock);
+	if (difftime(start_time, time(NULL)) > 40.0)
+		{
+		perror("Failure while attempting to wait for broadcast interval");
+		abort();
+		}
         }
     while (seconds % BROADCAST_INTERVAL != 0);
-}
-
-/* 
-==================
-BROADCAST VERIFIER
-==================
-
-View header file for user types
-*/
-
-unsigned short int
-rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsigned short int USER_TYPE, const char *USERNAME)
-{
-    if (head == NULL)
-        {
-        perror("\"head == NULL\" while attempting to verify nodes in a string DLL");
-	rpse_error_blameDev();
-        return EXIT_FAILURE;
-        }
-
-    if ((*head) == NULL)
-        {
-        perror("\"(*head) == NULL\" while attempting to verify nodes in a string DLL");
-	rpse_error_blameDev();
-        return EXIT_FAILURE;
-        }
-
-    regex_t compiled_regex;
-
-    char *expected_pattern = NULL;
-    for (unsigned short int attempt = 0; attempt < 3 && expected_pattern == NULL; attempt++)
-        expected_pattern = calloc(strlen(CLIENT_REGEX_CONSTANT) + 1, sizeof(char));
-    
-    if (expected_pattern == NULL)
-        {
-        perror("\"expected_pattern == NULL\" while attempting to calloc() memory for it.");
-        rpse_error_errorMessage("attempting to calloc() memory for a string");
-        return EXIT_FAILURE;
-        }
-
-    strncpy(expected_pattern, "", strlen("") + 1);
-    int ret_val;
-
-    if (USERNAME == NULL)
-        strncat(expected_pattern, "^[a-zA-Z0-9]{1,30}", strlen("^[a-zA-Z0-9]{1,30}") + 1);
-    else
-        strncat(expected_pattern, USERNAME, strlen(USERNAME) + 1);
-    
-    switch (USER_TYPE)
-        {
-        case SERVER_USER_TYPE:
-            strncat(expected_pattern, SERVER_REGEX_CONSTANT, strlen(SERVER_REGEX_CONSTANT) + 1);
-            break;
-        case CLIENT_USER_TYPE:
-            strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
-            break;        
-        }
-
-    ret_val = regcomp(&compiled_regex, expected_pattern, 0);
-
-    if (ret_val != EXIT_SUCCESS) 
-        {
-        rpse_error_blameDev();
-        return EXIT_FAILURE;
-        }
-
-    string_dll_node_t *tmp_next;
-    string_dll_node_t *tmp_current_node = (*head);
-
-    const unsigned int TOTAL_INITIAL_NODES = rpse_dll_getStringDLLNodeCount(&tmp_current_node);
-
-    for (
-        unsigned int position = 1;
-        position < TOTAL_INITIAL_NODES && tmp_current_node != NULL;
-        position++
-        )
-        {
-        if (tmp_current_node->next == NULL)
-            tmp_next = NULL;
-        else
-            tmp_next = tmp_current_node->next;
-        
-        ret_val = regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0);
-        if (ret_val != EXIT_SUCCESS && tmp_current_node != NULL && head != NULL)
-            {
-            if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
-                {
-                perror("Error while attempting to delete a string DLL node");
-                rpse_error_errorMessage("attempting to delete a string DLL node");
-                return EXIT_FAILURE;
-                }
-            position--; /* We are now technically at the same node index */
-            }
-
-        if (tmp_next == NULL)
-                tmp_current_node = NULL;
-        else
-            tmp_current_node = tmp_next;   
-        }
-
-    tmp_next = NULL;
-    tmp_current_node = NULL;
-
-    free(expected_pattern);
-    expected_pattern = NULL;
-
-    regfree(&compiled_regex);
-
-    return EXIT_SUCCESS;
 }
 
 /*
@@ -354,8 +351,19 @@ RECEIVER FUNCTION
 */
 
 string_dll_node_t *
-rpse_broadcast_receiveBroadcast(void)
+rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 {
+    if (BROADCAST_DATA == NULL)
+	{
+	perror("Broadcast data for receiver is NULL");
+	return NULL;
+	}
+    else if (BROADCAST_DATA->user_type != SERVER_USER_TYPE && BROADCAST_DATA->user_type != CLIENT_USER_TYPE)
+    	{
+	perror("User type invalid for receiver");
+	return NULL;
+	}
+    
     struct sockaddr_in broadcaster_addr;
 
     int sockfd = -1;
@@ -404,7 +412,7 @@ rpse_broadcast_receiveBroadcast(void)
 
     memset(&broadcaster_addr, 0, sizeof(broadcaster_addr));
     broadcaster_addr.sin_family = AF_INET;
-    broadcaster_addr.sin_port = htons(RECEIVER_PORT);
+    broadcaster_addr.sin_port = htons((unsigned short int)RECEIVER_PORT);
 
     char *broadcast_address = NULL;
 
@@ -441,21 +449,20 @@ rpse_broadcast_receiveBroadcast(void)
         }
     
     string_dll_node_t *head = NULL;
-
     time_t start = time(NULL);
+
     /* Core part here */
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
-        
         int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
         if (received_broadcast_len < 0)
-            continue;
+	    continue;
+	else
+	    current_buffer[received_broadcast_len] = '\0';
         
-        current_buffer[received_broadcast_len] = '\0';
-        
-	    if (head == NULL && received_broadcast_len != 0)
+	if (head == NULL && received_broadcast_len > 0)
             head = rpse_dll_createStringDLL(current_buffer);
-        else if (received_broadcast_len != 0)
+        else if (received_broadcast_len > 0)
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
@@ -473,18 +480,36 @@ rpse_broadcast_receiveBroadcast(void)
         rpse_error_errorMessage("attempting to calloc() memory for a struct");
         return NULL;
         }
+    
+    if (head != NULL)
+    	rpse_dll_deleteStringDLLDuplicateNodes(&head);
 
     while (current_node != NULL && current_broadcast_data != NULL)
         {
     	memset(current_broadcast_data->encrypted_message, 0, sizeof(current_broadcast_data->encrypted_message));
         if (current_node->data != NULL)
             {
-            memcpy(current_broadcast_data->encrypted_message, current_node->data, sizeof(current_broadcast_data->encrypted_message) - strlen("/nonce=") - sizeof(current_broadcast_data->nonce));
-            memcpy(current_broadcast_data->nonce, current_node->data + 126 + crypto_secretbox_MACBYTES, sizeof(current_broadcast_data->nonce));
+            char *nonce_position = strstr(current_node->data, "/nonce=");
+	    if (nonce_position == NULL)
+	    	{
+		perror("strstr()");
+	        if (current_node->next == NULL)
+		    current_node = NULL;
+		else
+		    current_node = current_node->next;
+		continue;
+		}
+	    size_t encrypted_data_size = nonce_position - current_node->data;
+            memcpy(current_broadcast_data->encrypted_message, current_node->data, encrypted_data_size);
+	    current_broadcast_data->encrypted_message[strlen(current_broadcast_data->encrypted_message)] = '\0';
+	    nonce_position += strlen("/nonce=");
+            memcpy(current_broadcast_data->nonce, nonce_position, strlen(nonce_position));
+	    nonce_position = NULL;
             memset(current_node->data, 0, strlen(current_node->data) + 1);
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
+	    current_node->data[strlen(current_node->data) - 1] = '\0';
             }
         else
             {
@@ -497,6 +522,9 @@ rpse_broadcast_receiveBroadcast(void)
         else
             current_node = current_node->next;
         }
+
+    if (head != NULL)
+    	_rpse_broadcast_verifyAndTrimDLLStructure(&head, BROADCAST_DATA->user_type, BROADCAST_DATA->username);
 
     free(current_broadcast_data);
     current_broadcast_data = NULL;

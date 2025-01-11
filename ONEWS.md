@@ -1,4 +1,5 @@
 # RPSe development news archive #
+Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
 
 ## v0.3.0-alpha.3 ##
 1. Added found players at the end of *rpse_broadcast_receiverLoop()*
@@ -48,18 +49,3 @@
 25. Fixed ```rpse_broadcast_waitUntilInterval()``` and made it an non-static function.
 26. Added GPL3 info to ```ONEWS.md``` file.
 
-# Copyright and Licensing #
-
-RPSe is released under license GNU General Public License v3.0
-
-RPSe, a rock paper scissors game for Linux systems.
-
-Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.com>, Marcin Zduniak
-
-This file is part of RPSe.
-
-RPSe is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-RPSe is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with RPSe. If not, see <https://www.gnu.org/licenses/>.
