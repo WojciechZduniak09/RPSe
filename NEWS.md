@@ -12,6 +12,10 @@ Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.c
 8. Added mutexes to interval waiter for thread safety.
 9. Fixed *rpse_broadcast_receiveBroadcast()*.
 10. Added safer deletion in duplicate DLL deletion function.
+11. Made broadcaster and receiver ports reusable.
+12. Added longer delays in interval waiter to improve system resource usage.
+13. Fixed static function naming conventions in moveDef (I think that's the file),
+14. Added more efficient and detailed error messages and no longer using *rpsecore-error.h* but *perror()*.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.

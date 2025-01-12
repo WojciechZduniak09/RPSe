@@ -20,7 +20,6 @@
 #include "../include/rpsecore-moveDef.h"
 #include "../include/rpsecore-broadcast.h"
 #include "../include/rpsecore-dll.h"
-#include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 #include <time.h>
 #include <unistd.h>
@@ -64,17 +63,17 @@ rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *mov
 {
     if (round_info == NULL)
         {
-        perror("\"round_info == NULL\" while attempting to display round summary");
+        perror("rpse_sharedGamemodeMenus_roundSummary() --> round_info == NULL");
         return EXIT_FAILURE;
         }
     else if (move_data == NULL)
         {
-        perror("\"move_data == NULL\" while attempting to display round summary");
+        perror("rpse_sharedGamemodeMenus_roundSummary() --> move_data == NULL");
         return EXIT_FAILURE;
         }
     else if (player_data == NULL)
         {
-        perror("\"player_data == NULL\" while attempting to display round summary");
+        perror("rpse_sharedGamemodeMenus_roundSummary() --> player_data == NULL");
         return EXIT_FAILURE;
         }
     
@@ -120,11 +119,9 @@ rpse_sharedGamemodeMenus_roundSummary(round_info_t *round_info, move_data_t *mov
     printf("This menu will auto-close in 15 seconds.\n");
 
     /* Thread is global */
-    int ret_val = pthread_create(&enterToContinue_thread_ID, NULL, &rpse_io_threadedEnterToContinue, NULL);
-    if (ret_val != EXIT_SUCCESS)
+    if (pthread_create(&enterToContinue_thread_ID, NULL, &rpse_io_threadedEnterToContinue, NULL) != EXIT_SUCCESS)
         {
-        perror("Unable to create enter to continue pthread, aborting for debug purposes...");
-        rpse_error_errorMessage("attempting to create pthread");
+        perror("rpse_sharedGamemodeMenus_roundSummary() --> pthread_create(&enterToContinue_thread_ID, ...) != EXIT_SUCCESS");
         abort();
         }
     
@@ -151,7 +148,7 @@ rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_fo
 {
     if (input_data == NULL)
         {
-        perror("\"input_data == NULL\" while attempting to display end of game menu");
+        perror("rpse_sharedGamemodeMenus_endOfGameMenu() --> input_data == NULL");
         return -1;
         }
     
@@ -164,7 +161,7 @@ rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_fo
 
     for (unsigned short int option_index = 0; option_index < 4; option_index++)
         {
-		sleep(0.5);
+	sleep(0.5);
         if (is_for_pve)
 		    printf("\t%u. %s.\n", option_index + 1, PVE_MENU_OPTIONS[option_index]);
         else
@@ -175,16 +172,24 @@ rpse_sharedGamemodeMenus_endOfGameMenu(user_input_data_t *input_data, bool is_fo
 	input_data->interval[1] = 4;
 
     if (is_for_pve)
-        rpse_io_int(input_data, false, "Choose an option by it's number: ");
+	{
+        if (rpse_io_int(input_data, false, "Choose an option by it's number: ") == EXIT_FAILURE)
+		{
+		perror("rpse_sharedGamemodeMenus_endOfGameMenu() --> IF CONDITION --> rpse_io_int() == EXIT_FAILURE");
+		return -1;
+		}
+	}
     else
         {
         time_t start_time = time(NULL);
         input_data->input.int_input = -1;
 
         while (input_data->input.int_input == -1 && difftime(time(NULL), start_time) < 15)
-            {
-            rpse_io_int(input_data, false, "Choose an option by it's number: ");
-            }
+            if (rpse_io_int(input_data, false, "Choose an option by it's number: ") == EXIT_FAILURE)
+	    	{
+		perror("rpse_sharedGamemodeMenus_endOfGameMenu() --> ELSE CONDITION --> rpse_io_int() == EXIT_FAILURE");
+		return -1;
+		}
         }
 
 	return input_data->input.int_input;

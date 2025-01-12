@@ -35,7 +35,6 @@ Fast explanation
 
 
 #include "../include/rpsecore-broadcast.h"
-#include "../include/rpsecore-error.h"
 #include "../include/rpsecore-dll.h"
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -51,9 +50,10 @@ Fast explanation
 #include <regex.h>
 #include <time.h>
 #include <signal.h>
+#include <errno.h>
 #include <sodium.h>
 
-#define RECEIVER_BUFFER_SIZE 101
+#define RECEIVER_BUFFER_SIZE 126 + crypto_secretbox_MACBYTES + NONCE_SIZE
 #define RECEIVER_TIMEOUT 2.0 /* seconds */
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
@@ -72,6 +72,7 @@ GLOBAL VARIABLES
 
 const int ENABLE_BROADCAST_OPTION = 1;
 const int REUSE_ADDR_OPTION = 1;
+const int REUSE_PORT_OPTION = 1;
 pthread_mutex_t clock_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
@@ -85,10 +86,9 @@ static unsigned short int
 _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
 {
     struct ifaddrs *ifaddr;
-    int ret_val = getifaddrs(&ifaddr);
-    if (ret_val < 0)
+    if (getifaddrs(&ifaddr) < 0)
         {
-        perror("\"ifaddr < 0\" while attempting to get available ifaddresses");
+        perror("_rpse_broadcast_getBroadcastAddress() --> getifaddrs() < 0");
         return EXIT_FAILURE;
         }
 
@@ -113,7 +113,7 @@ _rpse_broadcast_getBroadcastAddress(char *broadcast_addr_str)
 
     if (!broadcast_addr_found)
         {
-        rpse_error_errorMessage("broadcast address search");
+	perror("_rpse_broadcast_getBroadcastAddress() --> !broadcast_addr_found");
         return EXIT_FAILURE;
         }
     
@@ -129,15 +129,13 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
 {
     if (head == NULL)
         {
-        perror("\"head == NULL\" while attempting to verify nodes in a string dll");
-	rpse_error_blameDev();
+        perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> head == NULL");
         return EXIT_FAILURE;
         }
 
     if ((*head) == NULL)
         {
-        perror("\"(*head) == NULL\" while attempting to verify nodes in a string dll");
-	rpse_error_blameDev();
+        perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> (*head) == NULL");
         return EXIT_FAILURE;
         }
 
@@ -149,8 +147,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     
     if (expected_pattern == NULL)
         {
-        perror("\"expected_pattern == NULL\" while attempting to calloc() memory for it.");
-        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> expected_pattern == NULL");
         return EXIT_FAILURE;
         }
 
@@ -171,10 +168,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     int ret_val = regcomp(&compiled_regex, expected_pattern, REG_EXTENDED);
 
     if (ret_val != EXIT_SUCCESS) 
-        {
-        rpse_error_blameDev();
         return EXIT_FAILURE;
-        }
 
     string_dll_node_t *tmp_next;
     string_dll_node_t *tmp_current_node = (*head);
@@ -193,12 +187,11 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
             tmp_next = tmp_current_node->next;
         
         ret_val = regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0);
-        if (ret_val != EXIT_SUCCESS && tmp_current_node != NULL && head != NULL)
+        if (ret_val != EXIT_SUCCESS && head != NULL)
             {
             if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
                 {
-                perror("error while attempting to delete a string dll node");
-                rpse_error_errorMessage("attempting to delete a string dll node");
+                perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> rpse_dll_deleteAtStringDLLPosition() == EXIT_FAILURE");
                 return EXIT_FAILURE;
                 }
             position--; /* we are now technically at the same node index */
@@ -239,34 +232,35 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
         {
-        perror("socket()");
-        rpse_error_errorMessage("attempting to create UDP socket");
+        perror("rpse_broadcast_doublePublishBroadcast() --> socket() < 0");
         return EXIT_FAILURE;
         }
     
-    int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION));
-    if (ret_val < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION)) < 0)
         {
-        perror("\"ret_val < 0\" after attempting to make sockfd reusable");
-        rpse_error_errorMessage("attempting to modify a UDP socket");
+        perror("rpse_broadcast_doublePublishBroadcast() --> setsockopt(SO_REUSEADDR) < 0");
+        return EXIT_FAILURE;
+        }
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &REUSE_PORT_OPTION, sizeof(REUSE_PORT_OPTION)) < 0)
+        {
+        perror("rpse_broadcast_doublePublishBroadcast() --> setsockopt(SO_REUSEPORT) < 0");
         return EXIT_FAILURE;
         }
    
-    ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION));
-    if (ret_val < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION))< 0)
         {
-        perror("\"ret_val < 0\" after attempting to make sockfd broadcastable");
-        rpse_error_errorMessage("attempting to modify a UDP socket");
+        perror("rpse_broadcast_doublePublishBroadcast() --> setsockopt(SO_BROADCAST)");
         return EXIT_FAILURE;
         }
 
     memset(&broadcast_addr, 0, sizeof(broadcast_addr));
     broadcast_addr.sin_family = AF_INET;
-    broadcast_addr.sin_port = htons((unsigned short int)BROADCASTER_PORT);
+    broadcast_addr.sin_port = htons((unsigned short int)BROADCAST_PORT);
     char *broadcast_address = calloc(1, INET_ADDRSTRLEN);
     if (_rpse_broadcast_getBroadcastAddress(broadcast_address) == EXIT_FAILURE)
         {
-        perror("Unable to get broadcast address");
+        perror("rpse_broadcast_doublePublishBroadcast() --> _rpse_broadcast_getBroadcastAddress() == EXIT_FAILURE");
         return EXIT_FAILURE;
         }
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
@@ -283,8 +277,7 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     if (crypto_stream_chacha20_xor((unsigned char *)ciphertext, (const unsigned char *)broadcast_data->message, strlen(broadcast_data->message), (const unsigned char *)broadcast_data->nonce,
                                                                (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY) != EXIT_SUCCESS)
     	{
-	perror("Unable to encrypt broadcast");
-	rpse_error_errorMessage("encrypting a UDP broadcast");
+	perror("rpse_broadcast_doublePublishBroadcast() --> crypto_stream_chacha20_xor() != EXIT_SUCCESS");
 	return EXIT_FAILURE;
 	}
 
@@ -296,12 +289,10 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     /* Done twice in case the first one fails */
     for (unsigned short int iteration = 0; iteration < 2; iteration++)
 	{
-        ret_val = sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
-                         (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr));
-	if (ret_val < 0)
+	if (sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
+            (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr)) < 0)
 		{
-		perror("sendto()");
-		rpse_error_errorMessage("sending UDP broadcast");
+		perror("rpse_broadcast_doublePublishBroadcast() --> sendto() < 0");
 		return EXIT_FAILURE;
 		}
 	sleep(0.5);
@@ -335,9 +326,19 @@ rpse_broadcast_waitUntilInterval(void)
         current_time = localtime(&now);
         seconds = current_time->tm_sec;
 	pthread_mutex_unlock(&clock_lock);
+
+	if ((seconds < 15 && seconds > 0) || (seconds < 35 && seconds > 20) || (seconds < 55 && seconds > 40))
+		sleep(4);
+	else if ((seconds > 15 && seconds < 19) || (seconds > 35 && seconds < 39) || (seconds > 55 && seconds < 59))
+		sleep(1);
+	else if (seconds % BROADCAST_INTERVAL == EXIT_SUCCESS)
+		break;
+	else
+		sleep(0.25);
+
 	if (difftime(start_time, time(NULL)) > 40.0)
 		{
-		perror("Failure while attempting to wait for broadcast interval");
+		perror("rpse_broadcast_waitUntilInterval --> TIMEOUT");
 		abort();
 		}
         }
@@ -355,14 +356,14 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 {
     if (BROADCAST_DATA == NULL)
 	{
-	perror("Broadcast data for receiver is NULL");
+	perror("rpse_broadcast_receiveBroadcast() --> BROADCAST_DATA == NULL");
 	return NULL;
 	}
     else if (BROADCAST_DATA->user_type != SERVER_USER_TYPE && BROADCAST_DATA->user_type != CLIENT_USER_TYPE)
     	{
-	perror("User type invalid for receiver");
+	perror("rpse_broadcast_receiveBroadcast() --> BROADCAST_DATA->user_type INVALID");
 	return NULL;
-	}
+        }
     
     struct sockaddr_in broadcaster_addr;
 
@@ -371,48 +372,39 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
         {
-        perror("socket()");
-        rpse_error_errorMessage("attempting to create UDP socket");
+        perror("rpse_broadcast_receiveBroadcast() --> socket()");
+        return NULL;
+        }
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION)) < 0)
+        {
+        perror("rpse_broadcast_receiveBroadcast() --> setsockopt(SO_REUSEADDR)");
         return NULL;
         }
 
-    int ret_val = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION));
-    if (ret_val < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &REUSE_PORT_OPTION, sizeof(REUSE_PORT_OPTION)) < 0)
         {
-        perror("\"ret_val < 0\" after attempting to make sockfd reusable");
-        rpse_error_errorMessage("attempting to modify a UDP socket");
+        perror("rpse_broadcast_receiveBroadcast() --> setsockopt(SO_REUSEPORT)");
         return NULL;
         }
 
-    ret_val = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION));
-    if (ret_val < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION)) < 0)
         {
-        perror("\"ret_val < 0\" after attempting to make sockfd broadcastable");
-        rpse_error_errorMessage("attempting to modify a UDP socket");
+        perror("rpse_broadcast_receiveBroadcast() --> setsockopt(SO_BROADCAST)");
         return NULL;
         }
         
-    if (sockfd < 0)
-        {
-        perror("\"sockfd < 0\" after attempting to create it");
-        rpse_error_errorMessage("attempting to create a UDP socket");
-        return NULL;
-        }
     struct timeval socket_timeout;
     socket_timeout.tv_sec = 2; /* receiver timeout in seconds */
     socket_timeout.tv_usec = 0;
-
-    ret_val = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &socket_timeout, sizeof(socket_timeout));
-    if (sockfd < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &socket_timeout, sizeof(socket_timeout)) < 0)
         {
-        perror("\"ret_val < 0\" after make sockfd timeout");
-        rpse_error_errorMessage("attempting to modify a UDP socket");
+        perror("rpse_broadcast_receiveBroadcast() --> setsockopt(SO_RCVTIMEO) < 0");
         return NULL;
         }
 
     memset(&broadcaster_addr, 0, sizeof(broadcaster_addr));
     broadcaster_addr.sin_family = AF_INET;
-    broadcaster_addr.sin_port = htons((unsigned short int)RECEIVER_PORT);
+    broadcaster_addr.sin_port = htons((unsigned short int)BROADCAST_PORT);
 
     char *broadcast_address = NULL;
 
@@ -421,8 +413,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
     
     if (broadcast_address == NULL)
         {
-        perror("\"broadcast_address == NULL\" while attempting to calloc() memory fot it");
-        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        perror("rpse_broadcast_receiveBroadcast() --> broadcast_address == NULL");
         return NULL;
         }
     
@@ -430,10 +421,9 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
     broadcaster_addr.sin_addr.s_addr = inet_addr(broadcast_address);
     socklen_t receiver_sock_len = sizeof(broadcaster_addr);
 
-    ret_val = bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr));
-    if (ret_val < 0)
+    if (bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr)) < 0)
         {
-        perror("Unable to bind UDP socket");
+        perror("rpse_broadcast_receiveBroadcast() --> bind()");
         return NULL;
         }
 
@@ -443,8 +433,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 
     if (current_buffer == NULL)
         {
-        perror("\"current_buffer == NULL\" while attempting to calloc() memory fot it");
-        rpse_error_errorMessage("attempting to calloc() memory for a string");
+        perror("rpse_broadcast_receiveBroadcast() --> current_buffer == NULL");
         return NULL;
         }
     
@@ -455,14 +444,19 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
         int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
-        if (received_broadcast_len < 0)
-	    continue;
-	else
-	    current_buffer[received_broadcast_len] = '\0';
-        
-	if (head == NULL && received_broadcast_len > 0)
+	    perror("|| DEBUG || rpse_broadcast_receiveBroadcast --> recvfrom()");
+        if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
+            break;
+        else if (received_broadcast_len <= 0)
+            continue;
+        else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len < sizeof(current_buffer))
+            current_buffer[received_broadcast_len] = '\0';
+        else
+            break;
+            
+        if (head == NULL && received_broadcast_len > 0)
             head = rpse_dll_createStringDLL(current_buffer);
-        else if (received_broadcast_len > 0)
+        else if (received_broadcast_len > 0 && (size_t)received_broadcast_len < sizeof(current_buffer))
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
 
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
@@ -476,8 +470,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
     broadcast_data_t *current_broadcast_data = calloc(1, sizeof(broadcast_data_t));
     if (current_broadcast_data == NULL)
         {
-        perror("\"current_broadcast_data == NULL while attempting to calloc() memory for it");
-        rpse_error_errorMessage("attempting to calloc() memory for a struct");
+        perror("rpse_broadcast_receiveBroadcast() --> current_broadcast_data == NULL");
         return NULL;
         }
     
@@ -492,7 +485,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             char *nonce_position = strstr(current_node->data, "/nonce=");
 	    if (nonce_position == NULL)
 	    	{
-		perror("strstr()");
+		perror("rpse_broadcast_receiveBroadcast() --> nonce_position == NULL");
 	        if (current_node->next == NULL)
 		    current_node = NULL;
 		else

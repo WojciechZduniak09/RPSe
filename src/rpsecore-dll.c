@@ -16,9 +16,10 @@
  */
 
 #include "../include/rpsecore-dll.h"
-#include "../include/rpsecore-error.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 /*
 ======================
@@ -33,19 +34,18 @@ rpse_dll_getStringDLLNodeCount(string_dll_node_t **head)
 {
 	if (head == NULL)
 		{
-		perror("\"head == NULL\" while attempting to count nodes in a string DLL");
+		perror("rpse_dll_getStringDLLNodeCount() --> head == NULL");
 		return -1;
 		}
 		
 	if ((*head) == NULL)
 		{
-		perror("\"(*head) == NULL\" while attempting to count nodes in a string DLL");
+		perror("rpse_dll_getStringDLLNodeCount() --> (*head) == NULL");
 		return -1;
 		}
 	if ((*head)->prev != NULL)
 		{
-		perror("\"(*head)->prev != NULL\" while attempting to count nodes in a string DLL");
-		rpse_error_blameDev();
+		perror("rpse_dll_getStringDLLNodeCount() --> (*head)->prev != NULL");
 		return -1;
 		}
 	
@@ -75,8 +75,7 @@ rpse_dll_createStringDLL(const char *DATA)
 {
 	if (DATA == NULL)
 		{
-		perror("\"data == NULL\" while attempting to create a string DLL");
-		rpse_error_blameDev();
+		perror("rpse_dll_createStringDLL() --> DATA == NULL");
 		return NULL;
 		}
 
@@ -87,8 +86,7 @@ rpse_dll_createStringDLL(const char *DATA)
 
     if (new_node == NULL)
 		{
-		perror("\"new_node == NULL\" while attempting to calloc() memory for it");
-		rpse_error_errorMessage("attempting to calloc() memory for a doubly linked list node");
+		perror("rpse_dll_createStringDLL() --> new_node == NULL");
 		return NULL;
 		}
 
@@ -103,8 +101,7 @@ rpse_dll_createStringDLL(const char *DATA)
 
     if (new_node->data == NULL)
         {
-        perror("\"new_node->data == NULL\" while attempting to calloc() memory for it");
-	rpse_error_errorMessage("attempting to calloc() memory for a doubly linked list node's data");
+        perror("rpse_dll_createStringDLL() --> new_node->data == NULL");
 	return NULL;
 	}
 	
@@ -126,19 +123,19 @@ rpse_dll_insertAtStringDLLEnd(string_dll_node_t **head, const char *DATA)
 {
 	if (head == NULL)
 		{
-		perror("\"head == NULL\" while attempting to insert data at end of a string DLL");
+		perror("rpse_dll_insertAtStringDLLEnd() --> head == NULL");
 		return EXIT_FAILURE;
 		}
 	
 	else if ((*head) == NULL)
 		{
-		perror("\"(*head) == NULL\" while attempting to insert data at end of a string DLL");
+		perror("rpse_dll_insertAtStringDLLEnd() --> (*head) == NULL");
 		return EXIT_FAILURE;
 		}
 
 	else if ((*head)->prev != NULL)
 		{
-		perror("\"(*head)->prev != NULL\" while attempting to insert data at end of a string DLL");
+		perror("rpse_dll_insertAtStringDLLEnd() --> (*head)->prev != NULL");
 		return EXIT_FAILURE;
 		}
 	
@@ -151,8 +148,8 @@ rpse_dll_insertAtStringDLLEnd(string_dll_node_t **head, const char *DATA)
     tmp->next = new_node;
     new_node->prev = tmp;
 
-	tmp = NULL;
-	return EXIT_SUCCESS;
+    tmp = NULL;
+    return EXIT_SUCCESS;
 }
 
 /*
@@ -167,24 +164,24 @@ rpse_dll_deleteAtDLLStringPosition(string_dll_node_t **head, const unsigned int 
 {
 	if (head == NULL)
 		{
-		perror("\"head == NULL\" while attempting to delete a string DLL node");
+		perror("rpse_dll_deleteAtDLLStringPosition() --> head == NULL");
 		return EXIT_FAILURE;
 		}
 	
 	else if ((*head) == NULL)
 		{
-		perror("\"(*head) == NULL\" while attempting to delete a string DLL node");
+		perror("rpse_dll_deleteAtDLLStringPosition() --> (*head) == NULL");
 		return EXIT_FAILURE;
 		}
 
 	else if ((*head)->prev != NULL)
 		{
-		perror("\"(*head)->prev != NULL\" while attempting to delete a string DLL node");
+		perror("rpse_dll_deleteAtDLLStringPosition() --> (*head)->prev == NULL");
 		return EXIT_FAILURE;
 		}
 	else if ((*head)->data == NULL)
 		{
-		perror("\"(*head)->data != NULL\" while attempting to delete a string DLL node");
+		perror("rpse_dll_deleteAtDLLStringPosition() --> (*head)->data == NULL");
 		return EXIT_FAILURE;
 		}
 	
@@ -212,8 +209,10 @@ rpse_dll_deleteAtDLLStringPosition(string_dll_node_t **head, const unsigned int 
 		tmp = tmp->next;
 
 	if (tmp == NULL)
-		rpse_error_blameDev();
-	
+		{
+		perror("rpse_dll_deleteAtDLLStringPosition() --> tmp == NULL");
+		return EXIT_FAILURE;
+		}
 	if (tmp->next != NULL)
 		tmp->next->prev = tmp->prev;
 
@@ -237,98 +236,64 @@ unsigned short int
 rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 {
 	if (head == NULL)
-		{
 		/* Not much of a problem here */
-		return EXIT_FAILURE;
-		}
+		return EXIT_SUCCESS;
 	
 	else if ((*head) == NULL)
-		{
 		/* Not much of a problem here either */
-		return EXIT_FAILURE;
-		}
+		return EXIT_SUCCESS;
 
 	else if ((*head)->prev != NULL)
 		{
 		/* Big uh oh here */
-		perror("\"(*head)->prev != NULL\" while attempting to delete duplicate string DLL nodes");
-		rpse_error_blameDev();
+		perror("rpse_dll_deleteStringDLLDuplicateNodes() --> (*head)->prev != NULL");
 		return EXIT_FAILURE;
 		}
 
-	string_dll_node_t *current_head_dll_node = *head;
-	string_dll_node_t *current_auxiliary_dll_node = rpse_dll_createStringDLL("Initialiser data for auxiliary DLL which cannot be used by other "
-																			 "functions as it's longer than the Great Wall of China.");
-	int current_head_dll_element_num = 1;
+	string_dll_node_t *current_node = rpse_dll_createStringDLL((*head)->data);
+	string_dll_node_t *next_node = current_node->next;
+	int current_element_num = 1;
 
-	bool element_deleted = false;
-
-	while (current_head_dll_node != NULL)
+	while (next_node != NULL)
 		{
-		if (current_head_dll_node->data == NULL)
+		if (strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
 			{
-			rpse_dll_deleteAtDLLStringPosition(head, current_head_dll_element_num);
-			element_deleted = true;
-			current_head_dll_node = current_head_dll_node->next;
+			if (rpse_dll_deleteAtDLLStringPosition(head, current_element_num) == EXIT_FAILURE)
+				{
+				perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_deleteAtStringDLLPosition == EXIT_FAILURE");
+				return EXIT_FAILURE;
+				}
 			}
-		
 		else
 			{
-			while (current_auxiliary_dll_node != NULL)
-				{
-				int max_str_size = (strlen(current_head_dll_node->data) > strlen(current_auxiliary_dll_node->data) ? 
-									strlen(current_head_dll_node->data) + 1 : strlen(current_auxiliary_dll_node->data) + 1);
-				
-				if (strncmp(current_head_dll_node->data, current_auxiliary_dll_node->data, max_str_size) == 0)
-				/* 0 means that they're equal */
-					{
-					rpse_dll_deleteAtDLLStringPosition(head, current_head_dll_element_num);
-					element_deleted = true;
-					}
-
-				if (element_deleted)
-					{
-					current_head_dll_element_num++;
-					element_deleted = false;
-					}
-				if (current_auxiliary_dll_node->next == NULL)
-				    	{
-					if (rpse_dll_deleteStringDLL(&current_auxiliary_dll_node) == EXIT_FAILURE)
-						{
-						perror("Failure while attempting to delete current_auxiliary_dll_node");
-						return EXIT_FAILURE;
-						}
-					current_auxiliary_dll_node = NULL;
-					}
-				else
-					current_auxiliary_dll_node = current_auxiliary_dll_node->next;
-				}
+			current_element_num++;
+			current_node = next_node;
+			next_node = current_node->next;
 			}
 		}
 
+	current_node = NULL;
 	return EXIT_SUCCESS;
 }
-
 
 unsigned short int
 rpse_dll_deleteStringDLL(string_dll_node_t **head)
 {
 	if (head == NULL)
 		{
-		perror("\"head == NULL\" while attempting to delete a string DLL");
+		perror("rpse_dll_deleteStringDLL() --> head == NULL");
 		return EXIT_FAILURE;
 		}
 	
 	else if ((*head) == NULL)
 		{
-		perror("\"(*head) == NULL\" while attempting to delete a string DLL");
+		perror("rpse_dll_deleteStringDLL() --> (*head) == NULL");
 		return EXIT_FAILURE;
 		}
 	
 	else if ((*head)->prev != NULL)
 		{
-		perror("\"(*head)->prev != NULL\" while attempting to delete a string DLL");
-		rpse_error_blameDev();
+		perror("rpse_dll_deleteStringDLL() --> (*head)->prev != NULL");
 		return EXIT_FAILURE;
 		}
 

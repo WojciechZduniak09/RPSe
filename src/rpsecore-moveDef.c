@@ -17,7 +17,6 @@
 
 #include "../include/rpsecore-moveDef.h"
 #include "../include/rpsecore-io.h"
-#include "../include/rpsecore-error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,17 +58,17 @@ _rpse_moveDef_customMoveExplanation(void)
 }
 
 static unsigned short int
-rpse_moveDef_static_makeCustomMoveRelations(user_input_data_t *input_data, move_data_t *move_data)
+_rpse_moveDef_makeCustomMoveRelations(user_input_data_t *input_data, move_data_t *move_data)
 {
 	if (input_data == NULL)
 		{
-		perror("\"input_data == NULL\" while attempting to create custom move relations");
+		perror("_rpse_moveDef_makeCustomMoveRelations() --> input_data == NULL");
 		return EXIT_FAILURE;
 		}
 
 	else if (move_data == NULL)
 		{
-		perror("\"move_data == NULL\" while attempting to create custom move relations");
+		perror("_rpse_moveDef_makeCustomMoveRelations() --> move_data == NULL");
 		return EXIT_FAILURE;
 		}
 	
@@ -82,7 +81,7 @@ rpse_moveDef_static_makeCustomMoveRelations(user_input_data_t *input_data, move_
 		
 		if (rpse_io_yn(input_data, true) == EXIT_FAILURE)
 			{
-			perror("Failure while attempting to get y/n input");
+			perror("_rpse_moveDef_makeCustomMoveRelations() --> rpse_io_yn() == EXIT_FAILURE");
 			return EXIT_FAILURE;
 			}
 
@@ -115,7 +114,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 {
 	if (input_data == NULL)
 		{
-		perror("\"input_data == NULL\" while attempting to set up moves");
+		perror("rpse_moveDef_setUpMoves() --> input_data == NULL");
 		return NULL;
 		}
 
@@ -128,7 +127,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 	
 	if (new_move_data == NULL)
 		{
-		perror("\"new_move_data == NULL\" while attempting to calloc() memory for move data");
+		perror("rpse_moveDef_setUpMoves() --> new_move_data == NULL");
 		return NULL;
 		}
 
@@ -139,7 +138,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 
 	if (new_move_data->move_names == NULL)
 		{
-		perror("\"new_move_data->move_names == NULL\" while attempting to calloc() memory for move data names");
+		perror("rpse_moveDef_setUpMoves() --> new_move_data->move_names == NULL");
 		return NULL;
 		}
 
@@ -152,7 +151,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 
 		if (new_move_data->move_names[move_arr_index] == NULL)
 			{
-			perror("\"new_move_data->move_names[move_arr_index] == NULL\" while attempting to calloc() memory for move data name");
+			perror("rpse_moveDef_setUpMoves() --> new_move_data->move_names[move_arr_index] == NULL");
 			return NULL;
 			}
 
@@ -176,7 +175,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 
 	    if (rpse_io_str(input_data, true) == EXIT_FAILURE)
 	       	    {
-		    perror("Failure while attempting to get string input");
+		    perror("rpse_moveDef_setUpMoves() --> rpse_io_str() == EXIT_FAILURE");
 		    return NULL;
 		    }
 
@@ -204,7 +203,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 
 	if (new_move_data->move_names[3] == NULL)
 		{
-		perror("\"new_move_data->move_names[3] == NULL\" while attempting to calloc() memory for move data name");
+		perror("rpse_moveDef_setUpMoves() --> new_move_data->move_names[3] == NULL");
 		return NULL;
 		}
 
@@ -214,7 +213,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 	free(input_data->input.str_input);
 	input_data->input.str_input = NULL;
 	
-	rpse_moveDef_static_makeCustomMoveRelations(input_data, new_move_data);
+	_rpse_moveDef_makeCustomMoveRelations(input_data, new_move_data);
 
 	printf("\n");
 
@@ -226,12 +225,12 @@ rpse_moveDef_redoCustomMove(user_input_data_t *input_data, move_data_t *move_dat
 {
 	if (input_data == NULL)
 		{
-		perror(" \"input_data == NULL\" while attempting to redo custom move data");
+		perror("rpse_moveDef_redoCustomMove() --> input_data == NULL");
 		return EXIT_FAILURE;
 		}
 	else if (move_data == NULL)
 		{
-		perror("\"move_data == NULL\" while attempting to redo custom move data");
+		perror("rpse_moveDef_redoCustomMove() --> move_data == NULL");
 		return EXIT_FAILURE;
 		}
 	
@@ -240,7 +239,7 @@ rpse_moveDef_redoCustomMove(user_input_data_t *input_data, move_data_t *move_dat
 	input_data->buffer_size = 31;
 	if (rpse_io_str(input_data, true) == EXIT_FAILURE)
 		{
-		perror("Failure while attempting to get string input");
+		perror("rpse_moveDef_redoCustomMove() --> rpse_io_str() == EXIT_FAILURE");
 		return EXIT_FAILURE;
 		}
 	
@@ -251,7 +250,7 @@ rpse_moveDef_redoCustomMove(user_input_data_t *input_data, move_data_t *move_dat
 		
 	if (move_data->move_names[3] == NULL)
 		{
-		perror("\"move_data_>move_names[3] == NULL\" while attempting to realloc() custom move data");
+		perror("rpse_moveDef_redoCustomMove() --> move_data->move_names[3] == NULL");
 		return EXIT_FAILURE;
 		}
 
@@ -259,7 +258,7 @@ rpse_moveDef_redoCustomMove(user_input_data_t *input_data, move_data_t *move_dat
 	free(input_data->input.str_input);
 	input_data->input.str_input = NULL;
 
-	rpse_moveDef_static_makeCustomMoveRelations(input_data, move_data);
+	_rpse_moveDef_makeCustomMoveRelations(input_data, move_data);
 
 	return EXIT_SUCCESS;
 }
@@ -276,7 +275,7 @@ rpse_moveDef_freeMoveData(move_data_t *move_data)
 {
 	if (move_data == NULL)
 		{
-		perror("\"move_data == NULL\" while attempting to free move data array");
+		perror("rpse_moveDef_freeMoveData() --> move_data == NULL");
 		return EXIT_FAILURE;
 		}
 	
@@ -284,8 +283,7 @@ rpse_moveDef_freeMoveData(move_data_t *move_data)
 		{
 		if (move_data->move_names[array_index] == NULL)
 			{
-			perror("Unexpected value NULL found in move_data->move_names[array_index] while trying to free. " 
-				   "Has it already been free'd?");
+			perror("rpse_moveDef_freeMoveData() --> move_data->move_names[array_index] == NULL");
 			return EXIT_FAILURE;
 			}
 		
@@ -298,6 +296,5 @@ rpse_moveDef_freeMoveData(move_data_t *move_data)
     
     free(move_data);
     move_data = NULL;
-
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

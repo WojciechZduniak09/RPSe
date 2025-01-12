@@ -19,7 +19,6 @@
 #include "../include/rpsecore-sharedGamemodeMenus.h"
 #include "../include/rpsecore-gamemode1.h"
 #include "../include/rpsecore-gamemode2.h"
-#include "../include/rpsecore-error.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -57,7 +56,7 @@ _rpse_main_mainMenu(user_input_data_t *input_data)
 {
 	if (input_data == NULL)
 		{
-		perror("\"input_data == NULL\" while attempting to display main menu");
+		perror("_rpse_main_mainMenu() --> input_data == NULL");
 		exit(EXIT_FAILURE);
 		}
     printf("<----- Main menu ----->\n"
@@ -69,8 +68,7 @@ _rpse_main_mainMenu(user_input_data_t *input_data)
     
     if (rpse_io_int(input_data, false, "Select a gamemode by it's number: ") == EXIT_FAILURE)
 		{
-		perror("Failure while attempting to get int input");
-		rpse_error_errorMessage("attempt at getting int input");
+		perror("_rpse_main_mainMenu() --> rpse_io_int() == EXIT_FAILURE");
 		exit(EXIT_FAILURE);
 		}
 
@@ -86,7 +84,7 @@ MAIN FUNCTION
 int 
 main(void)
 {
-	printf("RPSe v0.2.0-alpha.2.\n");
+	printf("RPSe v0.4.0-alpha.4.\n");
 	_rpse_main_licenseStatement();
 	rpse_io_enterToContinue();
 
@@ -100,8 +98,7 @@ main(void)
 	unsigned short int selected_gamemode = 2; /* Just for initialisation */
 	if (sodium_init() < 0)
 		{
-		perror("Sodium (the encryption lib) init failed");
-		rpse_error_errorMessage("initialising Sodium");
+		perror("main() --> sodium_init() < 0");
 		exit(EXIT_FAILURE);
 		}
 	do

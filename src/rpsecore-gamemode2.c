@@ -20,7 +20,6 @@
 #include "../include/rpsecore-sharedGamemodeMenus.h"
 #include "../include/rpsecore-roundCalc.h"
 #include "../include/rpsecore-moveDef.h"
-#include "../include/rpsecore-error.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -77,8 +76,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
         
         if (rpse_io_int(input_data, false, "Select a move by it's number: ") == EXIT_FAILURE)
             {
-            perror("Failure while attempting to get int input");
-            rpse_error_errorMessage("attempt at getting int input");
+            perror("rpse_gamemode2_pve() --> rpse_io_int() == EXIT_FAILURE");
 
             if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
                 abort();
@@ -106,9 +104,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
 
         if (rpse_roundCalc_getWinner(&round_info, move_data) == EXIT_FAILURE)
             {
-            perror("Failure while attempting to calulate round winner");
-            rpse_error_errorMessage("attempt at calculating round winner");
-
+            perror("rpse_gamemode2_pve() --> rpse_roundCalc_getWinner() == EXIT_FAILURE");
             if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
                 abort();
             else
@@ -132,9 +128,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
             switch (rpse_sharedGamemodeMenus_endOfGameMenu(input_data, true))
                 {
                 case -1:
-                    perror("Failure while attempting to display end of game menu");
-                    rpse_error_errorMessage("attempt at displaying end of game menu");
-
+                    perror("rpse_gamemode2_pve() --> rpse_sharedGamemodeMenus_endOfGameMenu() == -1");
                     if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
                         abort();
                     else
@@ -149,9 +143,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
                     
                     if (rpse_moveDef_redoCustomMove(input_data, move_data) == EXIT_FAILURE)
                         {
-                        perror("Failure while attempting to redo custom move data");
-                        rpse_error_errorMessage("attempt at redoing custom move data");
-
+                        perror("rpse_gamemode2_pve() --> rpse_moveDef_redoCustomMove() == EXIT_FAILURE");
                         if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
                             abort();
                         else
@@ -164,8 +156,7 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
                 case 3:
                     if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
                         {
-                        perror("Failure while attempting to free move data");
-                        rpse_error_errorMessage("attempt at freeing move data");
+                        perror("rpse_gamemode2_pve() --> IN SWITCH-CASE --> rpse_moveDef_freeMoveData() == EXIT_FAILURE");
                         abort();
                         }
                     else
@@ -180,9 +171,8 @@ unsigned short int rpse_gamemode2_pve(user_input_data_t *input_data) {
 
     if (rpse_moveDef_freeMoveData(move_data) == EXIT_FAILURE)
         {
-        perror("Failure while attempting to free move data");
-        rpse_error_errorMessage("attempt at freeing move data");
-        exit(EXIT_FAILURE);
+        perror("rpse_gamemode2_pve() --> OUTSIDE SWITCH-CASE --> rpse_moveDef_freeMoveData() == EXIT_FAILURE");
+        abort();
         }
     
     return EXIT_GAME;

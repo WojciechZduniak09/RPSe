@@ -31,13 +31,13 @@ unsigned short int
 rpse_roundCalc_getWinner(round_info_t *round_info, move_data_t *move_data) {
 	if (round_info == NULL)
 		{
-		perror("\"round_info == NULL\" while attempting to calculate winner");
+		perror("rpse_roundCalc_getWinner() --> round_info == NULL");
 		return EXIT_FAILURE;
 		}
 	
 	else if (move_data == NULL)
 		{
-		perror("\"move_data == NULL\" while attempting to calculate winner");
+		perror("rpse_roundCalc_getWinner() --> move_data == NULL");
 		return EXIT_FAILURE;
 		}
 
@@ -85,7 +85,7 @@ unsigned short int
 rpse_roundCalc_prepNewMatch(round_info_t *round_info) {
 	if (round_info == NULL)
 		{
-		perror("\"round_info == NULL\" while attempting to prep new match");
+		perror("rpse_roundCalc_prepNewMatch() --> round_info == NULL");
 		return EXIT_FAILURE;
 		}
 	

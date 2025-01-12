@@ -20,7 +20,6 @@
 #include "../include/rpsecore-broadcast.h"
 #include "../include/rpsecore-discovery.h"
 #include "../include/rpsecore-dll.h"
-#include "../include/rpsecore-error.h"
 #include "../include/rpsecore-moveDef.h"
 #include <regex.h>
 #include <unistd.h>
@@ -47,8 +46,7 @@ _rpse_gamemode1_getIPAddress(void)
     struct ifaddrs *ifaddr;
     if (getifaddrs(&ifaddr) == -1)
         {
-        perror("getifaddrs");
-        rpse_error_errorMessage("attempting to get ifaddrs");
+        perror("_rpse_gamemode1_getIPAddress() --> getifaddrs() == -1");
         return NULL;
         }
     
@@ -59,7 +57,7 @@ _rpse_gamemode1_getIPAddress(void)
         host = calloc(NI_MAXHOST, sizeof(char));
     if (host == NULL)
         {
-        perror("calloc");
+        perror("_rpse_gamemode1_getIPAddress() --> host == NULL");
         return NULL;
         }
     
@@ -73,7 +71,7 @@ _rpse_gamemode1_getIPAddress(void)
             {
             if (getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
                 {
-                perror("getnameinfo");
+                perror("_rpse_gamemode1_getIPAddress() --> getnameinfo() == EXIT_FAILURE");
                 return NULL;
                 }
             }
@@ -98,8 +96,7 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 
                 if (rpse_io_str(input_data, false) == EXIT_FAILURE)
             	    {
-            	    perror("\"input_data->input.str_input == NULL\" while attempting to get stirng input");
-                    rpse_error_errorMessage("attempting to get string input");
+            	    perror("_rpse_gamemode1_getValidUsernameMenu() --> rpse_io_str == EXIT_FAILURE");
                     return EXIT_FAILURE;
                     }
     	    unsigned int username_len = strlen(input_data->input.str_input) + 1;
@@ -131,11 +128,9 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 	char pattern[36] = "";
 	strncat(pattern, input_data->input.str_input, 31);
 	strncat(pattern, "@RPSe", 6);
-	int ret_val = regcomp(&verification_regex, (const char *)&pattern, REG_EXTENDED);
-	if (ret_val)
+	if (regcomp(&verification_regex, (const char *)&pattern, REG_EXTENDED) == EXIT_FAILURE)
 		{
-		perror("Unable to compile regex.");
-		rpse_error_errorMessage("attempting to compile a regular expression");
+		perror("_rpse_gamemode1_getValidUsernameMenu() --> regcomp == EXIT_FAILURE");
 		return EXIT_FAILURE;
 		}
 	
@@ -146,24 +141,19 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 		string_dll_node_t *current_node = head;
 		while (current_node == NULL)
 			{
-			ret_val = regexec(&verification_regex, current_node->data, 0, NULL, 0);
-			if (!ret_val)
+			if (!regexec(&verification_regex, current_node->data, 0, NULL, 0))
 				{
 				exact_match_found = true;
 				current_node = NULL;
 				continue;
 				}
-			else if (ret_val != REG_NOMATCH)
-				{
-				/* In case of failure */
-				perror("Unable to execute a regex");
-				rpse_error_errorMessage("attempting to regexec()");
-				return EXIT_FAILURE;
-				}
-			if (current_node->next == NULL)
-				current_node = NULL;
 			else
-				current_node = current_node->next;
+				{
+				if (current_node->next == NULL)
+					current_node = NULL;
+				else
+					current_node = current_node->next;
+				}
 			}
 		}
 	regfree(&verification_regex);
@@ -187,7 +177,7 @@ _rpse_gamemode1_userTypeMenu(user_input_data_t *input_data)
 {
     if (input_data == NULL)
 	{
-	perror("\"input_data == NULL\" while attempting to display player menu");
+	perror("_rpse_gamemode1_userTypeMenu() --> input_data == NULL");
 	return -1;
 	}
     
@@ -203,7 +193,7 @@ _rpse_gamemode1_userTypeMenu(user_input_data_t *input_data)
     
     if (rpse_io_int(input_data, false, "Select a role by it's number: ") == EXIT_FAILURE)
         {
-        perror("Failure while attempting to get int input");
+        perror("_rpse_gamemode1_userTypeMenu() --> rpse_io_int() == EXIT_FAILURE");
         return 3; /* 3 is the failure code here, i cant be bothered to explain why lol */
         }
     
@@ -230,7 +220,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     broadcast_data.user_type = _rpse_gamemode1_userTypeMenu(input_data);
     if (broadcast_data.user_type == 3)
         {
-        perror("Failure while getting user type");
+        perror("rpse_gamemode1_pvp() --> broadcast_data.user_type == 3");
         return EXIT_FAILURE;
         }
 
@@ -248,7 +238,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     char *IP_address = _rpse_gamemode1_getIPAddress();
 
     char port[6];
-    snprintf(port, sizeof(port), "%d", BROADCASTER_PORT);
+    snprintf(port, sizeof(port), "%d", BROADCAST_PORT);
 
     move_data_t *move_data;
     if (broadcast_data.user_type == SERVER_USER_TYPE)
@@ -285,20 +275,16 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     IP_address = NULL;
 
     printf("\nRPSe will now start searching for players on your network, this shouldn't take over 20 seconds.\n");
-    printf("If you wish to stop searching for players at any time, please press Ctrl+C.\n\n");
+    printf("If you wish to stop searching for players at any time, please press Ctrl+C (this takes a bit).\n\n");
 
-    int ret_val = pthread_create(&broadcaster_loop_thread_ID, NULL, (void *)rpse_discovery_broadcasterLoop, (broadcast_data_t *)&broadcast_data);
-    if (ret_val != EXIT_SUCCESS)
+    if (pthread_create(&broadcaster_loop_thread_ID, NULL, (void *)rpse_discovery_broadcasterLoop, (broadcast_data_t *)&broadcast_data) != EXIT_SUCCESS)
 	{
-	perror("\"ret_val != EXIT_SUCCESS\" while trying to start broadcaster loop\n");
-	rpse_error_errorMessage("attempting to start a thread");
+	perror("rpse_gamemode1_pvp() --> pthread_create(&broadcaster_loop_thread_ID, ...) != EXIT_SUCCESS");
 	abort();
 	}
-    ret_val = pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_discovery_receiverLoop, (broadcast_data_t *)&broadcast_data);
-    if (ret_val != EXIT_SUCCESS)
+    if (pthread_create(&receiver_loop_thread_ID, NULL, (void *)rpse_discovery_receiverLoop, (broadcast_data_t *)&broadcast_data) != EXIT_SUCCESS)
         {
-        perror("\"ret_val != EXIT_SUCCESS\" while trying to start receiver loop\n");
-        rpse_error_errorMessage("attempting to start a thread");
+        perror("rpse_gamemode1_pvp() --> pthread_create(&receiver_loop_thread_ID, ...) != EXIT_SUCCESS");
         abort();
         }
 

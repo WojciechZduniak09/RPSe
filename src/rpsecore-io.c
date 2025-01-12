@@ -22,7 +22,6 @@
 #include  <unistd.h>
 #include <ctype.h>
 #include <pthread.h>
-#include "../include/rpsecore-error.h"
 #include "../include/rpsecore-io.h"
 
 bool enter_to_continue_first_call = true;
@@ -89,7 +88,7 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 	static bool first_time_called = true;
 	if (input_data == NULL)
 		{
-		perror("\"input_data == NULL\" while attempting to display string input prompt");
+		perror("rpse_io_str() --> input_data == NULL");
 		return EXIT_FAILURE;
 		}
 	
@@ -102,7 +101,7 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 
 	if (input_data->input.str_input == NULL)
 		{
-		perror("\"input_data->input.str_input == NULL\" while attempting to calloc() memory for buffer");
+		perror("rpse_io_str() --> BEFORE fgets() --> input_data->input.str_input == NULL");
 		return EXIT_FAILURE;
 		}
 
@@ -120,7 +119,7 @@ rpse_io_str(user_input_data_t *input_data, bool insert_tab_before_input)
 
 	if (input_data->input.str_input == NULL)
 		{
-		perror("\"input_data->input.str_input == NULL\" while attempting to realloc() memory for efficiency");
+		perror("rpse_io_str() --> AFTER fgets() --> input_data->input.str_input == NULL");
 		return EXIT_FAILURE;
 		}
 	else
@@ -132,13 +131,13 @@ rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *p
 {
 	if (input_data == NULL)
 		{
-		perror("\"input_data == NULL\" while attempting to display integer input prompt");
+		perror("rpse_io_int() --> input_data == NULL");
 		return EXIT_FAILURE;
 		}
 	
 	else if (input_data->interval[0] > input_data->interval[1])
 		{
-		rpse_error_blameDev();
+		perror("rpse_io_int() --> input_data->interval[0] > input_data->interval[1]");
 		return EXIT_FAILURE;
 		}
 	
@@ -162,42 +161,12 @@ rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char *p
 	return EXIT_SUCCESS;
 }
 
-
-// experimental function (does not even work yet!!)
-/*
-void rpse_io_int(user_input_data_t *input_data, bool insert_tab_before_input, char* prompt) {
-	//use strtol eventually?
-	bool input_is_valid = false;
-
-	while (!input_is_valid) {
-		printf("%s", prompt);
-		rpse_io_str(input_data, insert_tab_before_input);
-		unsigned short int inputted_str_len = strlen(input_data->input.str_input);
-
-		for (unsigned short int index = 0; index < inputted_str_len; index++) {
-			if (!isdigit(input_data->input.str_input[index])) {
-				fprintf(stderr, "Invalid input! Input must be a whole number in range of %d-%d.\n", \
-					input_data->interval[0], input_data->interval[1]);
-				free(input_data->input.str_input);
-				input_data->input.str_input = NULL;
-			}
-			else if (index == inputted_str_len - 1) {
-				input_data->input.int_input = atoi(input_data->input.str_input);
-				input_is_valid = (input_data->input.int_input > input_data->interval[0] && \
-					input_data->input.int_input < input_data->interval[1]) ? true : false;
-			}
-		}
-	}
-}
-*/
-
-
 unsigned short int
 rpse_io_yn(user_input_data_t *input_data, bool insert_tab_before_input)
 {
 	if (input_data == NULL)
 		{
-		perror("\"input_data == NULL\" while attempting to display y/n prompt");
+		perror("rpse_io_yn() --> input_data == NULL");
 		return EXIT_FAILURE;
 		}
 	

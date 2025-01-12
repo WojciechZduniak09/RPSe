@@ -76,7 +76,7 @@ rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
 {
     if (broadcast_data == NULL)
 	{
-	perror("broadcast_data == NULL in broadcaster loop");
+	perror("rpse_discovery_broadcasterLoop() --> broadcast_data == NULL");
 	pthread_exit(NULL);
 	return NULL;
 	}
@@ -88,8 +88,7 @@ rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
         {
         rpse_broadcast_waitUntilInterval();
         rpse_broadcast_doublePublishBroadcast(broadcast_data);
-	perror("rpse_broadcast_doublePublishBroadcast(broadcaster)");
-        sleep(2);
+	sleep(10);
         }
 
     signal(SIGUSR1, SIG_DFL);
@@ -105,13 +104,13 @@ rpse_discovery_receiverLoop(const broadcast_data_t *BROADCAST_DATA)
 {
     if (BROADCAST_DATA == NULL)
         {
-	perror("broadcast data is null in receiver loop");
+	perror("rpse_discovery_receiverLoop() --> BROADCAST_DATA == NULL");
 	pthread_exit(NULL);
         return NULL;
 	}
     else if (BROADCAST_DATA->user_type != SERVER_USER_TYPE && BROADCAST_DATA->user_type != CLIENT_USER_TYPE)
 	{
-	perror("broadcast user type invalid in receiver loop");
+	perror("rpse_discovery_receiverLoop() --> BROADCAST_DATA == NULL");
 	pthread_exit(NULL);
 	return NULL;
 	}
@@ -125,10 +124,9 @@ rpse_discovery_receiverLoop(const broadcast_data_t *BROADCAST_DATA)
 	printf("\n<----- Attempt %u ----->\n", attempt + 1);
         
 	rpse_broadcast_waitUntilInterval();
-	perror("rpse_broadcast_waitUntilInterval(receiver)");
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast(BROADCAST_DATA);
-	perror("rpse_broadcast_receiveBroadcast()");
-	
+	sleep(2);
+
 	printf("List of players found on your network:\n\n");
 	if (head == NULL || head->data == NULL)
 		{
