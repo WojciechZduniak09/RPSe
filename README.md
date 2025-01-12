@@ -2,7 +2,7 @@
 1. [Copyright information and licensing](#copyright-and-licensing).
 2. [Purpose of this software](#purpose-of-this-software).
 3. [Installation guide](#installation-guide).
-4. [List of contrbutors](#list-of-contributors).
+4. [List of contributors](#list-of-contributors).
 
 ## Copyright and licensing ##
 ![RPSe uses the GNU General Public Licencse v3.0 and can be used with later versions of the GNU General Public License](images/gplv3-or-later.png "This project uses the GPL v3.0 or later versions, if desired")
@@ -51,3 +51,4 @@ Note: running ```make clean``` to uninstall RPSe removes the entire ```RPSe/bin/
     * Contact at <githubinquiries.ladder140@passinbox.com> for anything you'd like.
 2. mz7mz7mz7 (Marcin Zduniak)
     * Prior .gitignore file.
+    * Makefile contributions.
