@@ -223,7 +223,7 @@ BROADCASTER
 */
 
 unsigned short int
-rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
+rpse_broadcast_publishBroadcast(broadcast_data_t *broadcast_data)
 {
     struct sockaddr_in broadcast_addr;
 
@@ -232,25 +232,25 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
         {
-        perror("rpse_broadcast_doublePublishBroadcast() --> socket() < 0");
+        perror("rpse_broadcast_publishBroadcast() --> socket() < 0");
         return EXIT_FAILURE;
         }
     
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &REUSE_ADDR_OPTION, sizeof(REUSE_ADDR_OPTION)) < 0)
         {
-        perror("rpse_broadcast_doublePublishBroadcast() --> setsockopt(SO_REUSEADDR) < 0");
+        perror("rpse_broadcast_publishBroadcast() --> setsockopt(SO_REUSEADDR) < 0");
         return EXIT_FAILURE;
         }
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &REUSE_PORT_OPTION, sizeof(REUSE_PORT_OPTION)) < 0)
         {
-        perror("rpse_broadcast_doublePublishBroadcast() --> setsockopt(SO_REUSEPORT) < 0");
+        perror("rpse_broadcast_publishBroadcast() --> setsockopt(SO_REUSEPORT) < 0");
         return EXIT_FAILURE;
         }
    
     if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &ENABLE_BROADCAST_OPTION, sizeof(ENABLE_BROADCAST_OPTION))< 0)
         {
-        perror("rpse_broadcast_doublePublishBroadcast() --> setsockopt(SO_BROADCAST)");
+        perror("rpse_broadcast_publishBroadcast() --> setsockopt(SO_BROADCAST)");
         return EXIT_FAILURE;
         }
 
@@ -260,7 +260,7 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     char *broadcast_address = calloc(1, INET_ADDRSTRLEN);
     if (_rpse_broadcast_getBroadcastAddress(broadcast_address) == EXIT_FAILURE)
         {
-        perror("rpse_broadcast_doublePublishBroadcast() --> _rpse_broadcast_getBroadcastAddress() == EXIT_FAILURE");
+        perror("rpse_broadcast_publishBroadcast() --> _rpse_broadcast_getBroadcastAddress() == EXIT_FAILURE");
         return EXIT_FAILURE;
         }
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
@@ -277,7 +277,7 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
     if (crypto_stream_chacha20_xor((unsigned char *)ciphertext, (const unsigned char *)broadcast_data->message, strlen(broadcast_data->message), (const unsigned char *)broadcast_data->nonce,
                                                                (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY) != EXIT_SUCCESS)
     	{
-	perror("rpse_broadcast_doublePublishBroadcast() --> crypto_stream_chacha20_xor() != EXIT_SUCCESS");
+	perror("rpse_broadcast_publishBroadcast() --> crypto_stream_chacha20_xor() != EXIT_SUCCESS");
 	return EXIT_FAILURE;
 	}
 
@@ -292,7 +292,7 @@ rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data)
 	if (sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
             (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr)) < 0)
 		{
-		perror("rpse_broadcast_doublePublishBroadcast() --> sendto() < 0");
+		perror("rpse_broadcast_publishBroadcast() --> sendto() < 0");
 		return EXIT_FAILURE;
 		}
 	sleep(0.5);

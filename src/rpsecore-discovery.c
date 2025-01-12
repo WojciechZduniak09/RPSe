@@ -87,7 +87,7 @@ rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
     while (broadcaster_termination_flag == 0)
         {
         rpse_broadcast_waitUntilInterval();
-        rpse_broadcast_doublePublishBroadcast(broadcast_data);
+        rpse_broadcast_publishBroadcast(broadcast_data);
 	sleep(10);
         }
 

@@ -76,6 +76,6 @@ typedef struct
 
 void rpse_broadcast_waitUntilInterval(void);
 string_dll_node_t * rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA);
-unsigned short int rpse_broadcast_doublePublishBroadcast(broadcast_data_t *broadcast_data);
+unsigned short int rpse_broadcast_publishBroadcast(broadcast_data_t *broadcast_data);
 
 #endif
