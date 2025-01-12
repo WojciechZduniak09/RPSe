@@ -88,7 +88,7 @@ rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
         {
         rpse_broadcast_waitUntilInterval();
         rpse_broadcast_publishBroadcast(broadcast_data);
-	sleep(10);
+	sleep(1);
         }
 
     signal(SIGUSR1, SIG_DFL);
@@ -125,7 +125,6 @@ rpse_discovery_receiverLoop(const broadcast_data_t *BROADCAST_DATA)
         
 	rpse_broadcast_waitUntilInterval();
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast(BROADCAST_DATA);
-	sleep(2);
 
 	printf("List of players found on your network:\n\n");
 	if (head == NULL || head->data == NULL)

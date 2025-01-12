@@ -271,7 +271,12 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 			next_node = current_node->next;
 			}
 		}
-
+	
+	if (rpse_dll_deleteStringDLL(&current_node) == EXIT_FAILURE)
+		{
+		perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_delteStringDLL() == EXIT_FAILURE");
+		return EXIT_FAILURE;
+		}
 	current_node = NULL;
 	return EXIT_SUCCESS;
 }
