@@ -16,7 +16,7 @@ Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.c
 12. Added longer delays in interval waiter to improve system resource usage.
 13. Fixed static function naming conventions in moveDef (I think that's the file),
 14. Added more efficient and detailed error messages and no longer using *rpsecore-error.h* but *perror()*.
-
+15. Made broadcaster broadcast once.
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.
 

@@ -286,16 +286,11 @@ rpse_broadcast_publishBroadcast(broadcast_data_t *broadcast_data)
     strcat(broadcast_data->encrypted_message, "/nonce=");
     strcat(broadcast_data->encrypted_message, broadcast_data->nonce);
 
-    /* Done twice in case the first one fails */
-    for (unsigned short int iteration = 0; iteration < 2; iteration++)
+    if (sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
+        (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr)) < 0)
 	{
-	if (sendto(sockfd, broadcast_data->encrypted_message, strlen((broadcast_data->encrypted_message)), 0,
-            (struct sockaddr *)&broadcast_addr, sizeof(broadcast_addr)) < 0)
-		{
-		perror("rpse_broadcast_publishBroadcast() --> sendto() < 0");
-		return EXIT_FAILURE;
-		}
-	sleep(0.5);
+	perror("rpse_broadcast_publishBroadcast() --> sendto() < 0");
+	return EXIT_FAILURE;
 	}
 
     free(broadcast_address);
