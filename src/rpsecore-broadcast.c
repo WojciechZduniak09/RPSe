@@ -53,7 +53,7 @@ Fast explanation
 #include <errno.h>
 #include <sodium.h>
 
-#define RECEIVER_BUFFER_SIZE 126 + crypto_secretbox_MACBYTES + NONCE_SIZE
+#define RECEIVER_BUFFER_SIZE 126 + crypto_secretbox_MACBYTES + (NONCE_SIZE + 2) / 3 * 4 + 1 + 16
 #define RECEIVER_TIMEOUT 2.0 /* seconds */
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
