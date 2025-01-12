@@ -53,7 +53,7 @@ Fast explanation
 #include <errno.h>
 #include <sodium.h>
 
-#define RECEIVER_BUFFER_SIZE 126 + crypto_secretbox_MACBYTES + (NONCE_SIZE + 2) / 3 * 4 + 1 + 16
+#define RECEIVER_BUFFER_SIZE 300
 #define RECEIVER_TIMEOUT 2.0 /* seconds */
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
@@ -451,8 +451,6 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             continue;
         else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len < sizeof(current_buffer))
             current_buffer[received_broadcast_len] = '\0';
-        else
-            break;
             
         if (head == NULL && received_broadcast_len > 0)
             head = rpse_dll_createStringDLL(current_buffer);
