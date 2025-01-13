@@ -184,6 +184,11 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 	    char current_character;
 	    do
 	        {
+		if (strcmp(input_data->input.str_input, "") == EXIT_SUCCESS)
+			{
+			move_name_is_valid = false;
+			break;
+			}
 	        current_character = input_data->input.str_input[current_character_index];
 	        if (current_character == '(' || current_character == ')')
 			{

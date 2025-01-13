@@ -58,9 +58,8 @@ Fast explanation
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
 #define BROADCAST_INTERVAL 20 /* seconds */
-#define CLIENT_REGEX_CONSTANT "@RPSe\\.server\\/invitesOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
-#define SERVER_REGEX_CONSTANT "@RPSe\\.client\\/bindOn\\(\\[0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)customMove\\(" \
-                                                                   "[a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
+#define SERVER_REGEX_CONSTANT "@RPSe\\.server\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)customMove\\([a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
+#define CLIENT_REGEX_CONSTANT "@RPSe\\.client\\/invitesOn\\(\\[0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
 #define BROADCAST_CHACHA20_ENCRYPTION_KEY "puTxV6ZLHgTSku61/e3C3hGp+chxUbrGs6+lxbBpraI=" /* It's constant as how else would users be able to know that one is a player or not? It's not like I own a central server or anything */
 
@@ -495,7 +494,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
-	    while (head->data[strlen(head->data) - 1] != ')')
+	    while (head != NULL && head->data != NULL && head->data[strlen(head->data) - 1] != ')')
 	    	head->data[strlen(head->data) - 1] = '\0';
 	    }
         else

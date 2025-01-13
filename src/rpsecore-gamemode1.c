@@ -104,6 +104,11 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 	    int current_character;
 	    do
 	        {
+		if (strcmp(input_data->input.str_input, "") == EXIT_SUCCESS)
+			{
+			username_is_valid = false;
+			break;
+			}
                 current_character = input_data->input.str_input[current_character_index];
 	        if (current_character == '@')
 	            {

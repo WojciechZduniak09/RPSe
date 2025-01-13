@@ -47,7 +47,7 @@ _rpse_main_licenseStatement(void)
 			"without even the implied warranty of\n"
 			"MERCHANTABILITY or FITNESS "
 			"FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n"
-			"You should have received a copy of the GNU General Public License along with RPSe."
+			"You should have received a copy of the GNU General Public License along with RPSe. "
 			"If not, see <https://www.gnu.org/licenses/>.\n\n");
 }
 
