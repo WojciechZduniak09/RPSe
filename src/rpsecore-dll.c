@@ -138,17 +138,22 @@ rpse_dll_insertAtStringDLLEnd(string_dll_node_t **head, const char *DATA)
 		perror("rpse_dll_insertAtStringDLLEnd() --> (*head)->prev != NULL");
 		return EXIT_FAILURE;
 		}
+	else if (DATA == NULL)
+		{
+		perror("rpse_dll_insertAtStringDLLEnd() --> DATA == NULL");
+		return EXIT_FAILURE;
+		}
 	
     string_dll_node_t *new_node = rpse_dll_createStringDLL(DATA);
 
-    string_dll_node_t *tmp = *head;
-    while (tmp->next != NULL)
-        tmp = tmp->next;
+    string_dll_node_t *tail = (*head);
+    while (tail->next != NULL)
+        tail = tail->next;
 
-    tmp->next = new_node;
-    new_node->prev = tmp;
+    tail->next = new_node;
+    new_node->prev = tail;
 
-    tmp = NULL;
+    tail = NULL;
     return EXIT_SUCCESS;
 }
 
