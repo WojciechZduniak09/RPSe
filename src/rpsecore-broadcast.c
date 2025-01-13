@@ -495,7 +495,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
-	    head->data[strlen(head->data)] = '\0';
+	    head->data[strlen(head->data) - 1] = '\0';
 	    }
         else
             {
@@ -508,10 +508,33 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         else
             current_node = current_node->next;
         }
-
+    
+    /* This is done this way beacause why would a client that wants to join a server see other clients and vice versa? */
     if (head != NULL)
-    	_rpse_broadcast_verifyAndTrimDLLStructure(&head, BROADCAST_DATA->user_type, BROADCAST_DATA->username);
-
+	{
+	if (BROADCAST_DATA->user_type == CLIENT_USER_TYPE)
+	    {
+	    if (_rpse_broadcast_verifyAndTrimDLLStructure(&head, SERVER_USER_TYPE, BROADCAST_DATA->username) == EXIT_FAILURE)
+	    	{
+		perror("rpse_broadcast_receiveBroadcast() --> SERVER_USER_TYPE --> _rpse_broadcast_verifyAndTrimDLLStructure() == EXIT_FAILURE");
+		return NULL;
+		}
+	    }
+    	    else if (BROADCAST_DATA->user_type == SERVER_USER_TYPE)
+		{
+	        if (_rpse_broadcast_verifyAndTrimDLLStructure(&head, CLIENT_USER_TYPE, BROADCAST_DATA->username) == EXIT_FAILURE)
+                    {
+		    perror("rpse_broadcast_receiveBroadcast() --> CLIENT_USER_TYPE --> _rpse_broadcast_verifyAndTrimDLLStructure() == EXIT_FAILURE");
+		    return NULL;
+		    }
+		}
+    	    else
+	        {
+                perror("rpse_broadcast_receiveBroadcast() --> BROADCAST_DATA->user_type INVALID FOR VERIFICATION");
+	        return NULL;
+	        }
+	    }
+		
     free(current_broadcast_data);
     current_broadcast_data = NULL;
 
