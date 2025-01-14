@@ -186,6 +186,7 @@ rpse_moveDef_setUpMoves(user_input_data_t *input_data)
 	        {
 		if (strcmp(input_data->input.str_input, "") == EXIT_SUCCESS)
 			{
+			printf("Invalid name! You must not give an empty name.\n");
 			move_name_is_valid = false;
 			break;
 			}

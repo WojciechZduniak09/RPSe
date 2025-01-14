@@ -106,6 +106,7 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
 	        {
 		if (strcmp(input_data->input.str_input, "") == EXIT_SUCCESS)
 			{
+			printf("Invalid input! Your username must not be empty.\n");
 			username_is_valid = false;
 			break;
 			}
