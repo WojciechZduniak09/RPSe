@@ -50,6 +50,7 @@ Fast explanation
 #include <regex.h>
 #include <time.h>
 #include <signal.h>
+#include <ctype.h>
 #include <errno.h>
 #include <sodium.h>
 
@@ -494,8 +495,10 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
-	    while (head != NULL && head->data != NULL && head->data[strlen(head->data) - 1] != ')')
-	    	head->data[strlen(head->data) - 1] = '\0';
+	    while (head != NULL && head->data != NULL && head->data[strlen(head->data) - 1] != ')' && \
+		   !isdigit(head->data[strlen(head->data) -1]) && head->data[strlen(head->data) - 1] != 't' && \
+		   head->data[strlen(head->data) - 1] != 'f')
+	        head->data[strlen(head->data) - 1] = '\0';
 	    }
         else
             {
