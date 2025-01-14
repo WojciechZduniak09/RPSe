@@ -438,8 +438,9 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
     /* Core part here */
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
+        memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
         int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
-	    perror("|| DEBUG || rpse_broadcast_receiveBroadcast --> recvfrom()");
+	perror("|| DEBUG || rpse_broadcast_receiveBroadcast --> recvfrom()");
         if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
             break;
         else if (received_broadcast_len <= 0)
@@ -451,8 +452,6 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             head = rpse_dll_createStringDLL(current_buffer);
         else if (received_broadcast_len > 0 && (size_t)received_broadcast_len < sizeof(current_buffer))
             rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
-
-        memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
         }
     /* We get rid of the nonce from each of the messages and decrypt them */
     string_dll_node_t *current_node;
