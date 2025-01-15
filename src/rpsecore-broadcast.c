@@ -15,25 +15,6 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/*
-Fast explanation
-    - Broadcast
-        - Wait until start of a 20-second interval (00h:00min:00sec, 00h:00min:20sec, etc.)
-        - Broadcast custom message
-        - 20 sec cooldown
-        - Broadcast in a loop until signal SIGUSR1 or SIGINT or use the static function for broadcasting twice at a moment.
-    - Receiver
-        - Wait until start of a 20-second interval
-        - Receive 15 messages max
-        - Return messages
-        - Clean duplicate messages
-        - Do not use signals as data must be processed afterwards in the receiver funtion but does
-	  in the loop just as the broadcaster
-        - Must be in a separate loop
-*/
-
-
-
 #include "../include/rpsecore-broadcast.h"
 #include "../include/rpsecore-dll.h"
 #include <stdlib.h>
@@ -437,18 +418,21 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         {
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
         int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
-	perror("|| DEBUG || rpse_broadcast_receiveBroadcast --> recvfrom()");
+	//perror("|| DEBUG || rpse_broadcast_receiveBroadcast --> recvfrom()");
         if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
-            break;
+            continue;
         else if (received_broadcast_len <= 0)
             continue;
-        else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len < sizeof(current_buffer))
-            current_buffer[received_broadcast_len] = '\0';
+        else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len <= sizeof(current_buffer))
+	    {
+	    perror("// INFO // rpse_broadcast_receiveBroadcast --> recvfrom()");
+	    current_buffer[received_broadcast_len] = '\0';
+	    if (head == NULL)
+		    head = rpse_dll_createStringDLL(current_buffer);
+	    else
+		    rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
+	    }
             
-        if (head == NULL && received_broadcast_len > 0)
-            head = rpse_dll_createStringDLL(current_buffer);
-        else if (received_broadcast_len > 0 && (size_t)received_broadcast_len < sizeof(current_buffer))
-            rpse_dll_insertAtStringDLLEnd(&head, current_buffer);
         }
     /* We get rid of the nonce from each of the messages and decrypt them */
     string_dll_node_t *current_node;

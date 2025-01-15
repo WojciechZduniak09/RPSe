@@ -14,6 +14,25 @@
  * You should have received a copy of the GNU General Public License along with RPSe.
  * If not, see <https://www.gnu.org/licenses/>.
  */
+
+/*
+Fast explanation
+    - Broadcast
+        - Wait until start of a 20-second interval (00h:00min:00sec, 00h:00min:20sec, etc.)
+        - Broadcast custom message
+        - 20 sec cooldown
+        - Broadcast in a loop until signal SIGUSR1 or SIGINT or use the static function for broadcasting twice at a moment.
+    - Receiver
+        - Wait until start of a 20-second interval
+        - Clean duplicate messages
+	- Verify proper, intended messages depending on user types
+        - Do not use signals as data must be processed afterwards in the receiver funtion but does
+	  in the loop just as the broadcaster
+        - Must be in a separate loop
+
+See *rpsecore-broadcast.h* for more detailed information.
+*/
+
 #include "../include/rpsecore-dll.h"
 #include "../include/rpsecore-broadcast.h"
 #include <unistd.h>
