@@ -19,6 +19,7 @@ Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.c
 15. Made broadcaster broadcast once.
 16. Fixed broadcast regex macros.
 17. Imposed naming restrictions for PvP string parsing safety.
+18. Made broadcaster in discovery source broadcast 3 times at random intevals to ensure messages don't conflict.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.

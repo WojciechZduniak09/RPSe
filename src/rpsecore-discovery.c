@@ -103,14 +103,20 @@ rpse_discovery_broadcasterLoop(broadcast_data_t *broadcast_data)
     signal(SIGUSR1, _rpse_discovery_handleInternalTerminationSignal);
     signal(SIGINT, _rpse_discovery_handleUserTerminationSignal);
 
-    srand(time(NULL));
-    float wait_time_to_ensure_discovery = ((float)rand() / RAND_MAX) * 1.9;
     while (broadcaster_termination_flag == 0)
         {
+	srand(time(NULL));
         rpse_broadcast_waitUntilInterval();
-        rpse_broadcast_publishBroadcast(broadcast_data);
-	sleep(wait_time_to_ensure_discovery);
-	wait_time_to_ensure_discovery = ((float)rand() / RAND_MAX) * 0.9;
+	time_t start = time(NULL);
+	unsigned short int times_broadcasted = 0;
+	while (difftime(start, time(NULL)) < 2.0 && times_broadcasted < 3)
+	    {
+	    float wait_time_to_ensure_discovery = ((float)rand() / RAND_MAX) * 0.9;
+	    sleep(wait_time_to_ensure_discovery);
+            rpse_broadcast_publishBroadcast(broadcast_data);
+	    times_broadcasted++;
+	    }
+	sleep(2);
         }
 
     signal(SIGUSR1, SIG_DFL);
