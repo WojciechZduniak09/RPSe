@@ -165,9 +165,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
             strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
             break;        
         }
-    int ret_val = regcomp(&compiled_regex, expected_pattern, REG_EXTENDED);
-
-    if (ret_val != EXIT_SUCCESS) 
+    if (regcomp(&compiled_regex, expected_pattern, REG_EXTENDED) != EXIT_SUCCESS) 
         return EXIT_FAILURE;
 
     string_dll_node_t *tmp_next;
@@ -186,8 +184,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
         else
             tmp_next = tmp_current_node->next;
         
-        ret_val = regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0);
-        if (ret_val != EXIT_SUCCESS && head != NULL)
+        if (regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0) != EXIT_SUCCESS && head != NULL)
             {
             if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
                 {
