@@ -34,6 +34,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sodium.h>
+#include <netdb.h>
 
 #define RECEIVER_BUFFER_SIZE 300
 #define RECEIVER_TIMEOUT 2.0 /* seconds */
@@ -192,7 +193,54 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     return EXIT_SUCCESS;
 }
 
-/* Go down to around line 348 for the receiver */
+/*
+=================
+IP ADDRESS FINDER
+=================
+*/
+
+char *
+rpse_broadcast_getIPAddress(void)
+{
+    struct ifaddrs *ifaddr;
+    if (getifaddrs(&ifaddr) == -1)
+        {
+        perror("rpse_broadcast_getIPAddress() --> getifaddrs() == -1");
+        return NULL;
+        }
+    
+    struct ifaddrs *ifa;
+    int family;
+    char *host = NULL;
+    for (unsigned short int attempt = 0; attempt < 3 && host == NULL; attempt++)
+        host = calloc(NI_MAXHOST, sizeof(char));
+    if (host == NULL)
+        {
+        perror("rpse_broadcast_getIPAddress() --> host == NULL");
+        return NULL;
+        }
+    
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+        {
+        if (ifa->ifa_addr == NULL)
+            continue;
+        family = ifa->ifa_addr->sa_family;
+
+        if (family == AF_INET)
+            {
+            if (getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
+                {
+                perror("rpse_broadcast_getIPAddress() --> getnameinfo() == EXIT_FAILURE");
+                return NULL;
+                }
+            }
+        }
+    
+    freeifaddrs(ifaddr);
+    return host;
+}
+
+/* Go down to around line 374 for the receiver */
 
 /*
 ===========
@@ -338,7 +386,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 	return NULL;
         }
     
-    struct sockaddr_in broadcaster_addr;
+    struct sockaddr_in server_template_addr;
 
     int sockfd = -1;
     for (unsigned short int attempt = 0; attempt < 3 && sockfd < 0; attempt++)
@@ -375,9 +423,9 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         return NULL;
         }
 
-    memset(&broadcaster_addr, 0, sizeof(broadcaster_addr));
-    broadcaster_addr.sin_family = AF_INET;
-    broadcaster_addr.sin_port = htons((unsigned short int)BROADCAST_PORT);
+    memset(&server_template_addr, 0, sizeof(server_template_addr));
+    server_template_addr.sin_family = AF_INET;
+    server_template_addr.sin_port = htons((unsigned short int)BROADCAST_PORT);
 
     char *broadcast_address = NULL;
 
@@ -391,10 +439,9 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         }
     
     _rpse_broadcast_getBroadcastAddress(broadcast_address);
-    broadcaster_addr.sin_addr.s_addr = inet_addr(broadcast_address);
-    socklen_t receiver_sock_len = sizeof(broadcaster_addr);
+    server_template_addr.sin_addr.s_addr = inet_addr(broadcast_address);
 
-    if (bind(sockfd, (struct sockaddr *)&broadcaster_addr, sizeof(broadcaster_addr)) < 0)
+    if (bind(sockfd, (struct sockaddr *)&server_template_addr, sizeof(server_template_addr)) < 0)
         {
         perror("rpse_broadcast_receiveBroadcast() --> bind()");
         return NULL;
@@ -411,21 +458,46 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         }
     
     string_dll_node_t *head = NULL;
+
+    char *host_ip_address = rpse_broadcast_getIPAddress();
+    if (host_ip_address == NULL)
+    	{
+	perror("rpse_broadcast_receiveBroadcast() --> host_ip_address == NULL");
+	return NULL;
+	}
+
+    struct in_addr host_ip_addr_info;
+    if (inet_pton(AF_INET, host_ip_address, &host_ip_addr_info) <= 0)
+    	{
+	perror("rpse_broadcast_receiveBroadcast() --> inet_pton() <= 0");
+	return NULL;
+	}
+
+    free(host_ip_address);
+    host_ip_address = NULL;
+
+    struct sockaddr_in broadcaster_addr;
+
     time_t start = time(NULL);
 
     /* Core part here */
     while (difftime(time(NULL), start) < RECEIVER_TIMEOUT)
         {
+	socklen_t broadcaster_addr_size = sizeof(broadcaster_addr);
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
-        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &receiver_sock_len);
-	//perror("|| DEBUG || rpse_broadcast_receiveBroadcast --> recvfrom()");
-        if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
+
+        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr,&broadcaster_addr_size);
+
+	if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
             continue;
         else if (received_broadcast_len <= 0)
             continue;
-        else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len <= sizeof(current_buffer))
+	if (broadcaster_addr.sin_addr.s_addr == host_ip_addr_info.s_addr)
+	    continue;
+
+        else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len <= strlen(current_buffer))
 	    {
-	    perror("// INFO // rpse_broadcast_receiveBroadcast --> recvfrom()");
+	    perror("// DEBUG // rpse_broadcast_receiveBroadcast --> recvfrom()");
 	    current_buffer[received_broadcast_len] = '\0';
 	    if (head == NULL)
 		    head = rpse_dll_createStringDLL(current_buffer);
@@ -516,8 +588,8 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
                 perror("rpse_broadcast_receiveBroadcast() --> BROADCAST_DATA->user_type INVALID FOR VERIFICATION");
 	        return NULL;
 	        }
-	    }
-		
+	}
+	    
     free(current_broadcast_data);
     current_broadcast_data = NULL;
 

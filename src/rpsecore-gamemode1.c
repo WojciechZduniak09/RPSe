@@ -28,58 +28,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <ifaddrs.h>
+
+/*
+================
+GLOBAL VARIABLES
+================
+*/
 
 pthread_t receiver_loop_thread_ID, broadcaster_loop_thread_ID;
+
 /*
 ================
 STATIC FUNCTIONS
 ================
 */
-
-/* ip must be freed */
-static char *
-_rpse_gamemode1_getIPAddress(void)
-{
-    struct ifaddrs *ifaddr;
-    if (getifaddrs(&ifaddr) == -1)
-        {
-        perror("_rpse_gamemode1_getIPAddress() --> getifaddrs() == -1");
-        return NULL;
-        }
-    
-    struct ifaddrs *ifa;
-    int family;
-    char *host = NULL;
-    for (unsigned short int attempt = 0; attempt < 3 && host == NULL; attempt++)
-        host = calloc(NI_MAXHOST, sizeof(char));
-    if (host == NULL)
-        {
-        perror("_rpse_gamemode1_getIPAddress() --> host == NULL");
-        return NULL;
-        }
-    
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-        {
-        if (ifa->ifa_addr == NULL)
-            continue;
-        family = ifa->ifa_addr->sa_family;
-
-        if (family == AF_INET)
-            {
-            if (getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
-                {
-                perror("_rpse_gamemode1_getIPAddress() --> getnameinfo() == EXIT_FAILURE");
-                return NULL;
-                }
-            }
-        }
-    
-    freeifaddrs(ifaddr);
-    return host;
-}
 
 /* Username stores in *input_data->input.str_input*. See rpsecore-broadcast.h for user types. */
 static unsigned short int
@@ -241,7 +203,7 @@ rpse_gamemode1_pvp(user_input_data_t *input_data)
     snprintf(broadcast_data.message, input_data->buffer_size, "%s", broadcast_data.username);
     strcat(broadcast_data.message, "@RPSe.");
 
-    char *IP_address = _rpse_gamemode1_getIPAddress();
+    char *IP_address = rpse_broadcast_getIPAddress();
 
     char port[6];
     snprintf(port, sizeof(port), "%d", BROADCAST_PORT);

@@ -74,6 +74,7 @@ typedef struct
     unsigned short int user_type;
 } broadcast_data_t;
 
+char * rpse_broadcast_getIPAddress(void);
 void rpse_broadcast_waitUntilInterval(void);
 string_dll_node_t * rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA);
 unsigned short int rpse_broadcast_publishBroadcast(broadcast_data_t *broadcast_data);
