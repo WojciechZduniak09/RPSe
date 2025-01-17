@@ -21,6 +21,7 @@ Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.c
 17. Imposed naming restrictions for PvP string parsing safety.
 18. Made broadcaster in discovery source broadcast 3 times at random intevals to ensure messages don't conflict.
 19. Made broadcast receiver ignore broadcasts from the host system.
+20. Made DLL position deleter not create indirect memory leaks.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.

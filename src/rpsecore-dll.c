@@ -202,10 +202,11 @@ rpse_dll_deleteAtDLLStringPosition(string_dll_node_t **head, const unsigned int 
 			tmp = (*head)->next;
 			free(tmp->prev->data);
 			tmp->prev->data = NULL;
+			free(tmp->prev);
+			tmp->prev = NULL;
 			(*head) = tmp;
-			(*head)->prev = NULL;
 			}
-
+		
 		tmp = NULL;
 		return EXIT_SUCCESS;
 		}
