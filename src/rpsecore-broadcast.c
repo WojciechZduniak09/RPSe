@@ -41,7 +41,7 @@
 #define MAX_BROADCASTS 15
 #define BROADCAST_DURATION 2 /* seconds */
 #define BROADCAST_INTERVAL 20 /* seconds */
-#define SERVER_REGEX_CONSTANT "@RPSe\\.server\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)customMove\\([a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
+#define SERVER_REGEX_CONSTANT "@RPSe\\.server\\/bindOn\\([0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)\\/customMove\\([a-zA-Z0-9]{1,30}\\)\\([tf]{3}\\)$"
 #define CLIENT_REGEX_CONSTANT "@RPSe\\.client\\/invitesOn\\(\\[0-9\\.]{7,15}\\)\\([0-9]{1,5}\\)"
 #define MAX_BROADCAST_SIZE 118 /* bytes/chars */
 #define BROADCAST_CHACHA20_ENCRYPTION_KEY "puTxV6ZLHgTSku61/e3C3hGp+chxUbrGs6+lxbBpraI=" /* It's constant as how else would users be able to know that one is a player or not? It's not like I own a central server or anything */
@@ -492,7 +492,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             continue;
         else if (received_broadcast_len <= 0)
             continue;
-	if (broadcaster_addr.sin_addr.s_addr == host_ip_addr_info.s_addr)
+	else if (broadcaster_addr.sin_addr.s_addr == host_ip_addr_info.s_addr)
 	    continue;
 
         else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len <= strlen(current_buffer))
