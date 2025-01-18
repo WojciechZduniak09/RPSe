@@ -477,6 +477,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
     host_ip_address = NULL;
 
     struct sockaddr_in broadcaster_addr;
+    broadcaster_addr.sin_addr.s_addr = 0; /* So no unitialised value will be used in an if statement */
 
     time_t start = time(NULL);
 
