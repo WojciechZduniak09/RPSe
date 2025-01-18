@@ -548,18 +548,15 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
-	    unsigned int data_len;
-	    if (head != NULL && head->data != NULL)
-		data_len = strlen(head->data);
-	    else
-		data_len = 0;
-
-	    if (data_len > 1)
+	    if (head  != NULL && head->data != NULL && strlen(head->data) > 1)
 		{
-		char final_char_in_data = head->data[data_len - 1];
-	        while (!isdigit(head->data[data_len - 1]) && final_char_in_data != ')' && \
-		       final_char_in_data != 't' && final_char_in_data != 'f')	                 
+		char final_char_in_data = head->data[strlen(head->data) - 1];
+	        while (!isdigit(final_char_in_data) && final_char_in_data != ')' && \
+		       final_char_in_data != 't' && final_char_in_data != 'f')
+	     	    {
 		    head->data[data_len - 1] = '\0';
+		    final_char_in_data = head->data[strlen(head->data) - 1];
+		    }
 		}
 	    }
         else
