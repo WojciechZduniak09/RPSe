@@ -551,7 +551,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 	    if (head  != NULL && head->data != NULL && strlen(head->data) > 1)
 		{
 		char final_char_in_data = head->data[strlen(head->data) - 1];
-	        while (!isdigit(final_char_in_data) && final_char_in_data != ')' && \
+	        while (!strcmp(head->data, "") && !isdigit(final_char_in_data) && final_char_in_data != ')' && \
 		       final_char_in_data != 't' && final_char_in_data != 'f')
 	     	    {
 		    head->data[strlen(head->data) - 1] = '\0';
