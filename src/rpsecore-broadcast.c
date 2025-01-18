@@ -486,14 +486,14 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 	socklen_t broadcaster_addr_size = sizeof(broadcaster_addr);
         memset(current_buffer, 0, RECEIVER_BUFFER_SIZE);
 
-        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr,&broadcaster_addr_size);
+        int received_broadcast_len = recvfrom(sockfd, current_buffer, RECEIVER_BUFFER_SIZE, 0, (struct sockaddr *)&broadcaster_addr, &broadcaster_addr_size);
 
-	if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
+	if (broadcaster_addr.sin_addr.s_addr == host_ip_addr_info.s_addr)
+	    continue;
+	else if (received_broadcast_len == EAGAIN || received_broadcast_len == EWOULDBLOCK)
             continue;
         else if (received_broadcast_len <= 0)
             continue;
-	else if (broadcaster_addr.sin_addr.s_addr == host_ip_addr_info.s_addr)
-	    continue;
 
         else if (received_broadcast_len > 0 && current_buffer != NULL && (size_t)received_broadcast_len <= strlen(current_buffer))
 	    {
