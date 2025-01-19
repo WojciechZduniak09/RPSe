@@ -548,7 +548,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
-	    const char *INVALID_PATTERN = "\\\\d";
+	    const char *INVALID_PATTERN = "^\d+$";
 	    regex_t invalid_pattern_regex;
 	    if (regcomp(&invalid_pattern_regex, INVALID_PATTERN, REG_EXTENDED))
 	    	{
