@@ -550,14 +550,19 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
 	    if (current_node != NULL && current_node->data != NULL && strlen(current_node->data) > 1)
 		{
-		unsigned int attempts = 0;
+		unsigned int attempt = 0;
 	        while (
-		       !strcmp(current_node->data, "") && \
-		       current_node->data[strlen(current_node->data) - 1] != ')' && attempts <= 50
+		       strcmp(current_node->data, "") != EXIT_SUCCESS && \
+		       current_node->data[strlen(current_node->data) - 1] != ')'
 		      ) /* these just appear all the time */
 	 	    {
-		    head->data[strlen(current_node->data) - 1] = '\0';
-		    attempts++;
+		    if (attempt == 100)
+	                {
+			current_node->data[0] = '\0';
+			break;
+			}
+		    current_node->data[strlen(current_node->data) - 1] = '\0';
+		    attempt++;
 		    }
 		}
 	    }
