@@ -548,7 +548,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
             crypto_stream_chacha20_xor((unsigned char *)current_node->data, (const unsigned char *)current_broadcast_data->encrypted_message, 
                                                                 strlen(current_broadcast_data->encrypted_message) + 1,
                                                                 (const unsigned char *)current_broadcast_data->nonce, (const unsigned char *)BROADCAST_CHACHA20_ENCRYPTION_KEY);
-	    const char *INVALID_PATTERN = "^\\\\[1-9][0-9][0-9]$";
+	    const char *INVALID_PATTERN = "^\\\\[1-9][0-9]{2}$";
 	    regex_t invalid_pattern_regex;
 	    if (regcomp(&invalid_pattern_regex, INVALID_PATTERN, REG_EXTENDED))
 	    	{
@@ -563,7 +563,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 			!regexec(&invalid_pattern_regex, current_node->data, 0, NULL, 0) || \
 		        current_node->data[strlen(current_node->data) - 1] == 'n' || \
 		        current_node->data[strlen(current_node->data) - 1] != ')' \
-		       ) && attempts <= 3
+		       ) && attempts <= 50
 		      ) /* these just appear all the time */
 	 	    {
 		    head->data[strlen(current_node->data) - 1] = '\0';
