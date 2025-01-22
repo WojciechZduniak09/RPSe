@@ -552,7 +552,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 		{
 		unsigned int attempt = 0;
 	        while (
-		       strcmp(current_node->data, "") != EXIT_SUCCESS && \
+		       current_node->data[0] != '\0' && \
 		       current_node->data[strlen(current_node->data) - 1] != ')'
 		      ) /* these just appear all the time */
 	 	    {
