@@ -583,7 +583,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 	{
 	if (BROADCAST_DATA->user_type == CLIENT_USER_TYPE)
 	    {
-	    if (_rpse_broadcast_verifyAndTrimDLLStructure(&head, SERVER_USER_TYPE, BROADCAST_DATA->username) == EXIT_FAILURE)
+	    if (_rpse_broadcast_verifyAndTrimDLLStructure(&head, SERVER_USER_TYPE, NULL) == EXIT_FAILURE)
 	    	{
 		perror("rpse_broadcast_receiveBroadcast() --> SERVER_USER_TYPE --> _rpse_broadcast_verifyAndTrimDLLStructure() == EXIT_FAILURE");
 		return NULL;
@@ -591,7 +591,7 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 	    }
     	    else if (BROADCAST_DATA->user_type == SERVER_USER_TYPE)
 		{
-	        if (_rpse_broadcast_verifyAndTrimDLLStructure(&head, CLIENT_USER_TYPE, BROADCAST_DATA->username) == EXIT_FAILURE)
+	        if (_rpse_broadcast_verifyAndTrimDLLStructure(&head, CLIENT_USER_TYPE, NULL) == EXIT_FAILURE)
                     {
 		    perror("rpse_broadcast_receiveBroadcast() --> CLIENT_USER_TYPE --> _rpse_broadcast_verifyAndTrimDLLStructure() == EXIT_FAILURE");
 		    return NULL;
