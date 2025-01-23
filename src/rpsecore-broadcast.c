@@ -521,9 +521,6 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
         return NULL;
         }
     
-    if (head != NULL)
-    	rpse_dll_deleteStringDLLDuplicateNodes(&head);
-
     while (current_node != NULL && current_broadcast_data != NULL)
         {
     	memset(current_broadcast_data->encrypted_message, 0, sizeof(current_broadcast_data->encrypted_message));
@@ -605,6 +602,9 @@ rpse_broadcast_receiveBroadcast(const broadcast_data_t *BROADCAST_DATA)
 	        }
 	}
 	    
+    if (head != NULL)
+    	rpse_dll_deleteStringDLLDuplicateNodes(&head);
+
     free(current_broadcast_data);
     current_broadcast_data = NULL;
 
