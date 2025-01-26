@@ -135,7 +135,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
         }
     
     if (USERNAME == NULL)
-	snprintf(expected_pattern, strlen("^[a-za-z0-9]{1,30}") + 1, "^[a-za-z0-9]{1,30}");
+	snprintf(expected_pattern, strlen("^[^@]{1,30}") + 1, "^[^@]{1,30}");
     else
 	snprintf(expected_pattern, strlen(USERNAME) + 1, USERNAME);
     
