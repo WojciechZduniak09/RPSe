@@ -124,8 +124,10 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     regex_t compiled_regex;
 
     char *expected_pattern = NULL;
-    expected_pattern = calloc(((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) + 1 : strlen(SERVER_REGEX_CONSTANT) + 1) + \
-		    	      ((USERNAME == NULL) ? 1 : strlen(USERNAME) + 1), sizeof(char));
+    unsigned short int expected_pattern_len = ((USERNAME == NULL) ? 0 : strlen(USERNAME)) + 1;
+    expected_pattern_len += ((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) : strlen(SERVER_REGEX_CONSTANT)) + 1;
+    
+    expected_pattern = calloc(expected_pattern_len, sizeof(char));
     if (expected_pattern == NULL)
         {
         perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> expected_pattern == NULL");
@@ -146,6 +148,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
             strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
             break;        
         }
+
     if (regcomp(&compiled_regex, expected_pattern, REG_EXTENDED) != EXIT_SUCCESS) 
         return EXIT_FAILURE;
 
