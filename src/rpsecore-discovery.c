@@ -185,6 +185,8 @@ rpse_discovery_receiverLoop(const broadcast_data_t *BROADCAST_DATA)
 			printf("%d) %s\n", player_number, current_node->data);
 			if (current_node->next == NULL)
 				current_node = NULL;
+			else
+				current_node = current_node->next;
 			}
 		}
 	rpse_dll_deleteStringDLL(&head);
