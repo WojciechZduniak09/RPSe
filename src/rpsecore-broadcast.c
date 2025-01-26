@@ -124,8 +124,9 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     regex_t compiled_regex;
 
     char *expected_pattern = NULL;
-    unsigned short int expected_pattern_len = ((USERNAME == NULL) ? 0 : strlen(USERNAME)) + 1;
-    expected_pattern_len += ((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) : strlen(SERVER_REGEX_CONSTANT)) + 1;
+    unsigned short int expected_pattern_len = 1;
+    expected_pattern_len += (USERNAME == NULL) ?  strlen("^[^@]{1,30}") : strlen(USERNAME);
+    expected_pattern_len += (USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) : strlen(SERVER_REGEX_CONSTANT);
     
     expected_pattern = calloc(expected_pattern_len, sizeof(char));
     if (expected_pattern == NULL)
