@@ -135,17 +135,17 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
         }
     
     if (USERNAME == NULL)
-	snprintf(expected_pattern, expected_pattern_len, "^[a-za-z0-9]{1,30}");
+	snprintf(expected_pattern, strlen("^[a-za-z0-9]{1,30}") + 1, "^[a-za-z0-9]{1,30}");
     else
-	snprintf(expected_pattern, expected_pattern_len, USERNAME);
+	snprintf(expected_pattern, strlen(USERNAME) + 1, USERNAME);
     
     switch (USER_TYPE)
         {
         case SERVER_USER_TYPE:
-	    snprintf(expected_pattern, expected_pattern_len, SERVER_REGEX_CONSTANT);
+	    strncat(expected_pattern, SERVER_REGEX_CONSTANT, strlen(SERVER_REGEX_CONSTANT) + 1);
             break;
         case CLIENT_USER_TYPE:
-	    snprintf(expected_pattern, expected_pattern_len + 1, CLIENT_REGEX_CONSTANT);
+	    strncat(expected_pattern, CLIENT_REGEX_CONSTANT, strlen(CLIENT_REGEX_CONSTANT) + 1);
             break;        
         }
 
