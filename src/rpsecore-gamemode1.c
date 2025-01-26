@@ -93,10 +93,10 @@ _rpse_gamemode1_getValidUsernameMenu(user_input_data_t *input_data, const unsign
         string_dll_node_t *head = rpse_broadcast_receiveBroadcast(&tmp_broadcast_data);
 
 	regex_t verification_regex;
-	char pattern[36] = "";
+	char pattern[38] = "";
 	strncat(pattern, input_data->input.str_input, 31); /* Does this account for special chars? No. */
 	/* Why? Because tbh I can't be bothered with even more bug smashing */
-	strncat(pattern, "\\@RPSe", 6);
+	strncat(pattern, "\\@RPSe", 8);
 	if (regcomp(&verification_regex, (const char *)&pattern, REG_EXTENDED) == EXIT_FAILURE)
 		{
 		perror("_rpse_gamemode1_getValidUsernameMenu() --> regcomp == EXIT_FAILURE");
