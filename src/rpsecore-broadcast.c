@@ -156,33 +156,31 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     string_dll_node_t *tmp_current_node = (*head);
 
     const unsigned int total_initial_nodes = rpse_dll_getStringDLLNodeCount(&tmp_current_node);
-
-    for (
-        unsigned int position = 1;
-        position <= total_initial_nodes && tmp_current_node != NULL;
-        position++
-        )
+    unsigned int current_position = 1;
+    while (current_position <= total_initial_nodes && tmp_current_node != NULL && head != NULL)
         {
         if (tmp_current_node->next == NULL)
             tmp_next = NULL;
         else
             tmp_next = tmp_current_node->next;
         
-        if (regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0) != EXIT_SUCCESS && head != NULL)
+        if (!regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0))
             {
-            if (rpse_dll_deleteAtDLLStringPosition(head, position) == EXIT_FAILURE) 
+            if (rpse_dll_deleteAtDLLStringPosition(head, current_position) == EXIT_FAILURE) 
                 {
                 perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> rpse_dll_deleteAtStringDLLPosition() == EXIT_FAILURE");
                 return EXIT_FAILURE;
                 }
-            position--; /* we are now technically at the same node index */
+	    current_position--; /* Now we are technically at the same position */
             }
 
         if (tmp_next == NULL)
                 tmp_current_node = NULL;
         else
             tmp_current_node = tmp_next;   
-        }
+        
+	current_position++;
+	}
 
     tmp_next = NULL;
     tmp_current_node = NULL;
