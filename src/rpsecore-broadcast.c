@@ -125,8 +125,8 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
 
     char *expected_pattern = NULL;
     for (unsigned short int attempt = 0; attempt < 3 && expected_pattern == NULL; attempt++)
-        expected_pattern = calloc(((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) : strlen(SERVER_REGEX_CONSTANT)) + \
-			          ((USERNAME == NULL) ? 0 : strlen(USERNAME)), sizeof(char));
+        expected_pattern = calloc(((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) + 1 : \
+				  strlen(SERVER_REGEX_CONSTANT) + 1) + ((USERNAME == NULL) ? 1 : strlen(USERNAME) + 1), sizeof(char));
     
     if (USERNAME == NULL)
         strncat(expected_pattern, "^[a-za-z0-9]{1,30}", strlen("^[a-za-z0-9]{1,30}") + 1);
