@@ -124,21 +124,19 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
     regex_t compiled_regex;
 
     char *expected_pattern = NULL;
-    for (unsigned short int attempt = 0; attempt < 3 && expected_pattern == NULL; attempt++)
-        expected_pattern = calloc(((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) + 1 : \
-				  strlen(SERVER_REGEX_CONSTANT) + 1) + ((USERNAME == NULL) ? 1 : strlen(USERNAME) + 1), sizeof(char));
+    expected_pattern = calloc(((USER_TYPE == CLIENT_USER_TYPE) ? strlen(CLIENT_REGEX_CONSTANT) + 1 : strlen(SERVER_REGEX_CONSTANT) + 1) + \
+		    	      ((USERNAME == NULL) ? 1 : strlen(USERNAME) + 1), sizeof(char));
+    if (expected_pattern == NULL)
+        {
+        perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> expected_pattern == NULL");
+        return EXIT_FAILURE;
+        }
     
     if (USERNAME == NULL)
         strncat(expected_pattern, "^[a-za-z0-9]{1,30}", strlen("^[a-za-z0-9]{1,30}") + 1);
     else
         strncat(expected_pattern, USERNAME, strlen(USERNAME) + 1);
     
-    if (expected_pattern == NULL)
-        {
-        perror("_rpse_broadcast_verifyAndTrimDLLStructure() --> expected_pattern == NULL");
-        return EXIT_FAILURE;
-        }
-
     switch (USER_TYPE)
         {
         case SERVER_USER_TYPE:
