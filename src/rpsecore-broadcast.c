@@ -165,7 +165,7 @@ _rpse_broadcast_verifyAndTrimDLLStructure(string_dll_node_t **head, const unsign
         else
             tmp_next = tmp_current_node->next;
         
-        if (!regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0))
+        if (regexec(&compiled_regex, tmp_current_node->data, 0, NULL, 0)) /* If no match */
             {
             if (rpse_dll_deleteAtDLLStringPosition(head, current_position) == EXIT_FAILURE) 
                 {
