@@ -23,6 +23,7 @@ Copyright (C) 2024, 2025 Wojciech Zduniak <githubinquiries.ladder140@passinbox.c
 19. Made broadcast receiver ignore broadcasts from the host system.
 20. Made DLL position deleter not create indirect memory leaks.
 21. Fixed regex constants.
+22. Fixed duplicate DLL node deleter.
 
 # Older NEWS information #
 Older news information can be found in the ```ONEWS.md``` archive file.

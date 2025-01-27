@@ -256,7 +256,7 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 		return EXIT_FAILURE;
 		}
 
-	string_dll_node_t *current_node = rpse_dll_createStringDLL((*head)->data);
+	string_dll_node_t *current_node = (*head);
 	string_dll_node_t *next_node = current_node->next;
 	int current_element_num = 1;
 
