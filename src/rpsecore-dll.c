@@ -260,7 +260,7 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 	string_dll_node_t *next_node = current_node->next;
 	int current_element_num = 1;
 
-	while (next_node != NULL)
+	while (next_node != NULL && next_node->data != NULL)
 		{
 		if (strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
 			{
@@ -278,11 +278,6 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 			}
 		}
 	
-	if (rpse_dll_deleteStringDLL(&current_node) == EXIT_FAILURE)
-		{
-		perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_delteStringDLL() == EXIT_FAILURE");
-		return EXIT_FAILURE;
-		}
 	current_node = NULL;
 	return EXIT_SUCCESS;
 }
