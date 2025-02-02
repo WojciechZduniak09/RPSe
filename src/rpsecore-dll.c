@@ -262,19 +262,22 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 
 	while (next_node != NULL && next_node->data != NULL)
 		{
-		if (current_node->data != NULL && strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
+		if (current_node->data != NULL)
 			{
-			if (rpse_dll_deleteAtDLLStringPosition(head, current_element_num) == EXIT_FAILURE)
+			if (strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
 				{
-				perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_deleteAtStringDLLPosition == EXIT_FAILURE");
-				return EXIT_FAILURE;
+				if (rpse_dll_deleteAtDLLStringPosition(head, current_element_num) == EXIT_FAILURE)
+					{
+					perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_deleteAtStringDLLPosition == EXIT_FAILURE");
+					return EXIT_FAILURE;
+					}
 				}
-			}
-		else
-			{
-			current_element_num++;
-			current_node = next_node;
-			next_node = current_node->next;
+			else
+				{
+				current_element_num++;
+				current_node = next_node;
+				next_node = current_node->next;
+				}
 			}
 		}
 	
