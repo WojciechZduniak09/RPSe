@@ -262,7 +262,7 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 
 	while (next_node != NULL && next_node->data != NULL)
 		{
-		if (strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
+		if (current_node->data != NULL && strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
 			{
 			if (rpse_dll_deleteAtDLLStringPosition(head, current_element_num) == EXIT_FAILURE)
 				{
