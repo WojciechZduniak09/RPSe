@@ -255,30 +255,31 @@ rpse_dll_deleteStringDLLDuplicateNodes(string_dll_node_t **head)
 		perror("rpse_dll_deleteStringDLLDuplicateNodes() --> (*head)->prev != NULL");
 		return EXIT_FAILURE;
 		}
-
-	string_dll_node_t *current_node = (*head);
-	string_dll_node_t *next_node = current_node->next;
-	int current_element_num = 1;
-
-	while (next_node != NULL && next_node->data != NULL)
+	
+	unsigned int next_node_index = 2; // Yes, I made indexing start at 1. Roast me
+	string_dll_node_t *tmp_head = (*head);
+	
+	for (string_dll_node_t *current_node = tmp_head; current_node != NULL; current_node = current_node->next)
 		{
-		if (current_node->data != NULL)
+		for (string_dll_node_t *next_node = current_node->next; next_node != NULL; next_node = next_node->next)
 			{
-			if (strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
+			if (next_node == NULL)
+				continue;
+			else
 				{
-				if (rpse_dll_deleteAtDLLStringPosition(head, current_element_num) == EXIT_FAILURE)
+				if (strcmp(current_node->data, next_node->data) == EXIT_SUCCESS)
 					{
-					perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_deleteAtStringDLLPosition == EXIT_FAILURE");
-					return EXIT_FAILURE;
+					if (rpse_dll_deleteAtDLLStringPosition(&tmp_head, next_node_index) == EXIT_FAILURE)
+						{
+						perror("rpse_dll_deleteStringDLLDuplicateNodes() --> rpse_dll_deleteAtStringDLLPosition == EXIT_FAILURE");
+						return EXIT_FAILURE;
+						}
 					}
+				else
+					next_node_index++;
 				}
-			current_element_num++;
-			current_node = next_node;
-			next_node = current_node->next;
 			}
 		}
-	
-	current_node = NULL;
 	return EXIT_SUCCESS;
 }
 
